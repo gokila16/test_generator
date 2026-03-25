@@ -1,0 +1,13 @@
+[{
+    "full_name": "org.apache.pdfbox.Loader.loadFDF",
+    "class_name": "Loader",
+    "inner_class": null,
+    "method_name": "loadFDF",
+    "file_path": "/Users/apple/Documents/research/thesis_research/v5/pdfbox/src/main/java/org/apache/pdfbox/Loader.java",
+    "signature": "public static FDFDocument loadFDF(InputStream input) throws IOException",
+    "javadoc": "/**\n     * This will load a document from an input stream. The stream is loaded to the memory to establish random access to\n     * the data.\n     *\n     * @param input The stream that contains the document. To read the stream\n     * {@link org.apache.pdfbox.io.RandomAccessReadBuffer} is used\n     *\n     * @return The document that was loaded.\n     *\n     * @throws IOException If there is an error reading from the stream.\n     */",
+    "body": "{\n        try (RandomAccessRead readBuffer = new RandomAccessReadBuffer(input))\n        {\n            FDFParser parser = new FDFParser(readBuffer);\n            return parser.parse();\n        }\n    }",
+    "usage_snippets": [],
+    "kind": "Public Static Method",
+    "status": "OK"
+  }]
