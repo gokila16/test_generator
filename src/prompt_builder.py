@@ -1,5 +1,5 @@
 def build_base_prompt(method):
-    test_class_name = f"{method['class_name']}Test"
+    test_class_name = f"{method['class_name']}_{method['method_name']}_Test"
     
     prompt = f"""You are a Java unit test generator. Generate a JUnit 5 test for the following method.
 Your test should:
@@ -26,7 +26,7 @@ IMPORTANT: The package MUST be: {'.'.join(method['full_name'].split('.')[:-2])}
 
 
 def build_retry_prompt(error_message, failing_test, method):
-    test_class_name = f"{method['class_name']}Test"
+    test_class_name = f"{method['class_name']}_{method['method_name']}_Test"
     package = '.'.join(method['full_name'].split('.')[:-2])
     
     return f"""The test you generated previously failed to compile with the following error:

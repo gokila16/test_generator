@@ -4,16 +4,19 @@ load_dotenv()
 # ============================================
 # PATHS
 # ============================================
-BASE_DIR   = '/Users/apple/Documents/research/thesis_research/v5'
-PDFBOX_DIR = f'{BASE_DIR}/pdfbox'
-INPUT_JSON = f'{BASE_DIR}/extracted_metadata_final.json'
+import os
 
-GENERATED_TESTS_DIR = f'{PDFBOX_DIR}/generated_tests'
-PROMPTS_DIR         = f'{BASE_DIR}/prompts'
-RESPONSES_DIR       = f'{BASE_DIR}/responses'
-RESULTS_DIR         = f'{BASE_DIR}/results'
-RESULTS_JSON        = f'{RESULTS_DIR}/results.json'
-FINAL_REPORT        = f'{RESULTS_DIR}/final_report.txt'
+BASE_DIR   = os.path.join('C:\\', 'Users', 'Harini',
+                          'Documents', 'thesis_research', 'PDFBOX-v5')
+PDFBOX_DIR = os.path.join(BASE_DIR, 'pdfbox')
+
+GENERATED_TESTS_DIR = os.path.join(PDFBOX_DIR, 'generated_tests')
+PROMPTS_DIR         = os.path.join(BASE_DIR, 'prompts')
+RESPONSES_DIR       = os.path.join(BASE_DIR, 'responses')
+RESULTS_DIR         = os.path.join(BASE_DIR, 'results')
+RESULTS_JSON        = os.path.join(RESULTS_DIR, 'results.json')
+FINAL_REPORT        = os.path.join(RESULTS_DIR, 'final_report.txt')
+INPUT_JSON          = os.path.join(BASE_DIR, 'extracted_metadata_final.json')
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # ============================================
 # LLM SETTINGS
@@ -28,3 +31,9 @@ MAX_RETRIES = 2
 # ============================================
 TEST_TIMEOUT  = 30
 MAVEN_TIMEOUT = 60
+# Set this to the full path of mvn.cmd if 'mvn' is not on your terminal's PATH
+# e.g. r'C:\Program Files\Maven\apache-maven-3.9.6\bin\mvn.cmd'
+MAVEN_EXECUTABLE = r'C:\Program Files\maven\apache-maven-3.9.14-bin\apache-maven-3.9.14\bin\mvn.cmd'
+# Set this to your JDK root folder if JAVA_HOME is not set in your terminal
+# e.g. r'C:\Program Files\Java\jdk-21'
+JAVA_HOME = r'C:\Program Files\Java\ms-25.0.2'

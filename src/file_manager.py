@@ -1,5 +1,6 @@
 import os
 import shutil
+import config
 
 def sanitize_name(full_name):
     """Converts full method name to safe filename"""
@@ -12,21 +13,42 @@ def get_package_from_full_name(full_name):
     -> org.apache.pdfbox.multipdf
     """
     parts = full_name.split('.')
-    # Remove last two parts (class name and method name)
     package_parts = parts[:-2]
     return '.'.join(package_parts)
 
 def get_test_class_name(class_name, method_name, index=None):
     if index is not None:
         return f"{class_name}_{method_name}_{index}_Test"
-    return f"{class_name}Test"
+    return f"{class_name}_{method_name}_Test"
+
+def get_test_destination(full_name, class_name, method_name, overload_index=None):
+    """
+    Gets destination path in src/test/java matching package structure
+    e.g. org.apache.pdfbox.multipdf.PDFMergerUtility.appendDocument
+    -> src/test/java/org/apache/pdfbox/multipdf/PDFMergerUtility_appendDocument_Test.java
+    """
+    parts = full_name.split('.')
+    package_parts = parts[:-2]  # remove class name and method name
+    package_path = os.path.join(*package_parts) if package_parts else ''
+
+    if package_path:
+        dest_dir = os.path.join(
+            config.PDFBOX_DIR,
+            'src', 'test', 'java',
+            package_path
+        )
+    else:
+        dest_dir = os.path.join(config.PDFBOX_DIR, 'src', 'test', 'java')
+    dest_dir = os.path.normpath(dest_dir)
+    test_class = get_test_class_name(class_name, method_name, overload_index)
+    return dest_dir, f"{test_class}.java"
 
 def save_prompt(prompts_dir, full_name, prompt, is_retry=False):
     """Saves prompt to prompts/ folder"""
     os.makedirs(prompts_dir, exist_ok=True)
     suffix = '_retry_prompt.txt' if is_retry else '_prompt.txt'
     path = os.path.join(prompts_dir, sanitize_name(full_name) + suffix)
-    with open(path, 'w') as f:
+    with open(path, 'w', encoding='utf-8') as f:
         f.write(prompt)
     return path
 
@@ -35,15 +57,19 @@ def save_response(responses_dir, full_name, response, is_retry=False):
     os.makedirs(responses_dir, exist_ok=True)
     suffix = '_retry_response.txt' if is_retry else '_response.txt'
     path = os.path.join(responses_dir, sanitize_name(full_name) + suffix)
-    with open(path, 'w') as f:
+    with open(path, 'w', encoding='utf-8') as f:
         f.write(response or '')
     return path
 
-def save_test_file(generated_tests_dir, class_name, java_code):
-    """Saves generated Java test file"""
-    os.makedirs(generated_tests_dir, exist_ok=True)
-    test_class = get_test_class_name(class_name)
-    path = os.path.join(generated_tests_dir, f"{test_class}.java")
-    with open(path, 'w') as f:
+def save_test_file(generated_tests_dir, full_name, class_name, method_name, java_code, overload_index=None):
+    """Saves generated Java test file organized into package subdirectories"""
+    parts = full_name.split('.')
+    package_parts = parts[:-2]  # remove class name and method name
+    package_path = os.path.join(*package_parts) if package_parts else ''
+    dest_dir = os.path.join(generated_tests_dir, package_path) if package_path else generated_tests_dir
+    os.makedirs(dest_dir, exist_ok=True)
+    test_class = get_test_class_name(class_name, method_name, overload_index)
+    path = os.path.normpath(os.path.join(dest_dir, f"{test_class}.java"))
+    with open(path, 'w', encoding='utf-8') as f:
         f.write(java_code)
     return path

@@ -1,3 +1,4 @@
+from collections import Counter
 from datetime import datetime
 import config
 from src.loader import load_methods
@@ -13,31 +14,49 @@ from src.result_tracker import (load_results, save_result,
 from src.reporter import print_progress, print_final_report
 
 
+def assign_unique_keys(methods):
+    """Assign a unique results.json key and overload index to each method.
+    Overloaded methods (same full_name) get a numeric suffix: full_name_0, full_name_1, ...
+    """
+    counts = Counter(m['full_name'] for m in methods)
+    seen = Counter()
+    for m in methods:
+        fn = m['full_name']
+        if counts[fn] > 1:
+            m['unique_key'] = f"{fn}_overload_{seen[fn]}"
+            m['overload_index'] = seen[fn]
+        else:
+            m['unique_key'] = fn
+            m['overload_index'] = None
+        seen[fn] += 1
+    return methods
+
+
 def run_pipeline():
     start_time = datetime.now()
     print("=" * 40)
     print("PIPELINE STEP 3: TEST GENERATION")
     print("=" * 40)
 
-    # Load methods
-    methods = load_methods(config.INPUT_JSON)
+    # Load methods and assign unique keys for overloads
+    methods = assign_unique_keys(load_methods(config.INPUT_JSON))
 
     # Skip already processed
     existing = load_results(config.RESULTS_JSON)
     remaining = [
         m for m in methods
-        if not is_already_processed(
-            config.RESULTS_JSON, m['full_name']
-        )
+        if not is_already_processed(config.RESULTS_JSON, m['unique_key'])
     ]
     print(f"Already done: {len(existing)}")
     print(f"Remaining:    {len(remaining)}")
 
     for i, method in enumerate(remaining):
-        full_name   = method['full_name']
-        class_name  = method['class_name']
-        method_name = method['method_name']
-        test_class  = get_test_class_name(class_name)
+        full_name      = method['full_name']
+        unique_key     = method['unique_key']
+        class_name     = method['class_name']
+        method_name    = method['method_name']
+        overload_index = method['overload_index']
+        test_class     = get_test_class_name(class_name, method_name, overload_index)
 
         print(f"\n[{i+1}/{len(remaining)}] {method_name}")
 
@@ -45,11 +64,11 @@ def run_pipeline():
         prompt   = build_base_prompt(method)
         response = call_llm(prompt)
 
-        save_prompt(config.PROMPTS_DIR, full_name, prompt)
-        save_response(config.RESPONSES_DIR, full_name, response)
+        save_prompt(config.PROMPTS_DIR, unique_key, prompt)
+        save_response(config.RESPONSES_DIR, unique_key, response)
 
         if not response:
-            save_result(config.RESULTS_JSON, full_name, {
+            save_result(config.RESULTS_JSON, unique_key, {
                 'status':          'API_ERROR',
                 'retry_triggered': False,
                 'retry_succeeded': None,
@@ -59,7 +78,7 @@ def run_pipeline():
 
         java_code = extract_java_code(response)
         if not java_code:
-            save_result(config.RESULTS_JSON, full_name, {
+            save_result(config.RESULTS_JSON, unique_key, {
                 'status':          'EXTRACTION_FAILED',
                 'retry_triggered': False,
                 'retry_succeeded': None,
@@ -67,14 +86,18 @@ def run_pipeline():
             })
             continue
 
-        # Save test file to generated_tests/
-        test_path = save_test_file(
-            config.GENERATED_TESTS_DIR, class_name, java_code
-        )
+        # For overloads, rename the class in the generated code to match the indexed filename
+        if overload_index is not None:
+            base_class  = get_test_class_name(class_name, method_name)
+            index_class = get_test_class_name(class_name, method_name, overload_index)
+            java_code = java_code.replace(base_class, index_class)
 
-        # ---- COMPILE AND RUN ----
+        # Save test file
+        test_path = save_test_file(config.GENERATED_TESTS_DIR, full_name, class_name, method_name, java_code, overload_index)
+
+        # Compile and run
         compiled, passed, error = compile_and_run(
-            test_path, full_name, class_name
+            test_path, full_name, class_name, method_name, overload_index
         )
 
         # ---- RETRY UP TO 2 TIMES IF FAILED ----
@@ -98,7 +121,7 @@ def run_pipeline():
                          retry_response, is_retry=True)
 
             if not retry_response:
-                save_result(config.RESULTS_JSON, full_name, {
+                save_result(config.RESULTS_JSON, unique_key, {
                     'status':          'API_ERROR',
                     'retry_triggered': retry_triggered,
                     'retry_succeeded': False,
@@ -109,12 +132,16 @@ def run_pipeline():
 
             retry_java = extract_java_code(retry_response)
             if retry_java:
+                if overload_index is not None:
+                    base_class  = get_test_class_name(class_name, method_name)
+                    index_class = get_test_class_name(class_name, method_name, overload_index)
+                    retry_java = retry_java.replace(base_class, index_class)
                 java_code = retry_java
                 test_path = save_test_file(
-                    config.GENERATED_TESTS_DIR, class_name, retry_java
+                    config.GENERATED_TESTS_DIR, full_name, class_name, method_name, retry_java, overload_index
                 )
                 compiled, passed, error = compile_and_run(
-                    test_path, full_name, class_name
+                    test_path, full_name, class_name, method_name, overload_index
                 )
                 retry_succeeded = compiled and passed
             else:
@@ -129,7 +156,7 @@ def run_pipeline():
         else:
             status = 'PASSED'
 
-        save_result(config.RESULTS_JSON, full_name, {
+        save_result(config.RESULTS_JSON, unique_key, {
             'status':          status,
             'retry_triggered': retry_triggered,
             'retry_succeeded': retry_succeeded,

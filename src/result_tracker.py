@@ -7,7 +7,7 @@ def load_results(results_path):
         # Check if file is empty
         if os.path.getsize(results_path) == 0:
             return {}
-        with open(results_path, 'r') as f:
+        with open(results_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     return {}
 
@@ -23,7 +23,7 @@ def save_result(results_path, full_name, result):
     result['timestamp'] = str(datetime.now())
     results[full_name] = result
 
-    with open(results_path, 'w') as f:
+    with open(results_path, 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2)
 
 def is_already_processed(results_path, full_name):
