@@ -44,10 +44,43 @@ def _format_dependencies_for_retry(method, generated_test_code):
     return "\n".join(lines)
 
 
-def build_base_prompt(method):
+def _format_developer_tests(developer_tests):
+    """
+    Formats the developer-written test cases for the method to inject
+    as full context into the base prompt.
+    developer_tests: list of strings, each being a full test file or
+                     a relevant test method extracted from the test suite.
+    """
+    if not developer_tests:
+        return ""
+
+    lines = ["// DEVELOPER-WRITTEN TESTS (these are real, passing tests for this class):"]
+    lines.append("// Use these as reference for how to set up objects, which resources to use,")
+    lines.append("// and what assertions are meaningful. Do NOT copy them directly — generate NEW tests.")
+    lines.append("//")
+    for i, test in enumerate(developer_tests, 1):
+        lines.append(f"// --- Reference Test {i} ---")
+        for line in test.splitlines():
+            lines.append(f"// {line}")
+        lines.append("//")
+
+    return "\n".join(lines)
+
+
+def build_base_prompt(method, developer_tests=None):
+    """
+    Builds the base generation prompt.
+
+    Args:
+        method: method metadata dict
+        developer_tests: optional list of developer-written test strings
+                         for Approach 1 (full context feeding).
+                         Pass None or empty list for baseline (no context).
+    """
     test_class_name = f"{method['class_name']}_{method['method_name']}_Test"
     package = '.'.join(method['full_name'].split('.')[:-2])
     import_section = _format_imports(method)
+    developer_test_section = _format_developer_tests(developer_tests) if developer_tests else ""
 
     prompt = f"""You are an expert Java software engineer specializing in writing high-quality JUnit 5 unit tests.
 
@@ -65,9 +98,7 @@ The output must start with the package declaration.
 5. NEVER pass bare null to any overloaded method. Always cast null to the exact parameter type (e.g. `(File) null`, `(InputStream) null`, `(String) null`).
 6. Do NOT access private fields or methods of any class.
 7. Do NOT test private implementation details — test observable behavior through the public API only.
-8. If you receive an object as the return value of a dependency method 
-and its class is not listed in DEPENDENCY SIGNATURES, do not call 
-any methods on it. Only assert that it is not null.
+8. If you receive an object as the return value of a dependency method and its class is not listed in DEPENDENCY SIGNATURES, do not call any methods on it. Only assert that it is not null.
 
 === TEST QUALITY REQUIREMENTS ===
 - Write 2-3 focused test methods covering: the normal/happy-path, at least one edge case (null, empty, boundary), and expected exceptions if the method declares any throws.
@@ -94,15 +125,29 @@ any methods on it. Only assert that it is not null.
     if import_section:
         prompt += import_section + "\n\n"
 
+    if developer_test_section:
+        prompt += developer_test_section + "\n\n"
+
     prompt += "\nGenerate the test class now:"
     return prompt
 
 
-def build_retry_prompt(error_message, failing_test, method):
+def build_retry_prompt(error_message, failing_test, method, developer_tests=None):
+    """
+    Builds the retry prompt when the generated test fails.
+
+    Args:
+        error_message: compiler or runtime error string
+        failing_test: the generated test code that failed
+        method: method metadata dict
+        developer_tests: optional list of developer-written test strings.
+                         Pass the same value used in build_base_prompt.
+    """
     test_class_name = f"{method['class_name']}_{method['method_name']}_Test"
     package = '.'.join(method['full_name'].split('.')[:-2])
     import_section = _format_imports(method)
     dep_section = _format_dependencies_for_retry(method, failing_test)
+    developer_test_section = _format_developer_tests(developer_tests) if developer_tests else ""
 
     prompt = f"""The JUnit 5 test you generated previously failed. Carefully read the error, identify the root cause, and produce a fully corrected version.
 
@@ -131,9 +176,7 @@ def build_retry_prompt(error_message, failing_test, method):
 9. Do NOT access private fields or methods of any class.
 10. Do NOT guess constructors — only instantiate a class if its constructor is explicitly listed in DEPENDENCY SIGNATURES.
 11. If a meaningful test cannot be written, produce the simplest test that compiles and passes.
-12.If you receive an object as the return value of a dependency method 
-and its class is not listed in DEPENDENCY SIGNATURES, do not call 
-any methods on it. Only assert that it is not null.
+12. If you receive an object as the return value of a dependency method and its class is not listed in DEPENDENCY SIGNATURES, do not call any methods on it. Only assert that it is not null.
 
 === ERROR DIAGNOSIS GUIDE ===
 - "reference to X is ambiguous" → you passed uncast null to an overloaded method. Cast it: (ExpectedType) null.
@@ -153,7 +196,9 @@ Output ONLY the corrected raw Java source code, starting with the package declar
         prompt += import_section + "\n\n"
 
     if dep_section:
-        prompt += dep_section + "\n"
+        prompt += dep_section + "\n\n"
 
+    if developer_test_section:
+        prompt += developer_test_section + "\n\n"
     prompt += "\nGenerate the corrected test class now:"
     return prompt

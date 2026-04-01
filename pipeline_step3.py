@@ -1,3 +1,4 @@
+import os
 from collections import Counter
 from datetime import datetime
 import config
@@ -12,6 +13,30 @@ from src.maven_runner import compile_and_run
 from src.result_tracker import (load_results, save_result,
                                  is_already_processed)
 from src.reporter import print_progress, print_final_report
+
+TEST_SUITE_PATH = os.path.join(config.PDFBOX_DIR, 'src', 'test', 'java')
+
+
+def get_developer_tests_for_method(method, test_suite_path):
+    """
+    Walks test_suite_path recursively, finds all .java test files whose
+    filename contains the method's class_name, and returns their contents
+    as a list of strings. Returns an empty list if none are found.
+    """
+    class_name = method['class_name']
+    matches = []
+    if not os.path.isdir(test_suite_path):
+        return matches
+    for root, _, files in os.walk(test_suite_path):
+        for filename in files:
+            if filename.endswith('.java') and class_name in filename:
+                filepath = os.path.join(root, filename)
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        matches.append(f.read())
+                except (OSError, UnicodeDecodeError):
+                    pass
+    return matches
 
 
 def assign_unique_keys(methods):
@@ -61,7 +86,8 @@ def run_pipeline():
         print(f"\n[{i+1}/{len(remaining)}] {method_name}")
 
         # ---- BASE PROMPT ----
-        prompt   = build_base_prompt(method)
+        developer_tests = get_developer_tests_for_method(method, TEST_SUITE_PATH)
+        prompt   = build_base_prompt(method, developer_tests=developer_tests)
         response = call_llm(prompt)
 
         save_prompt(config.PROMPTS_DIR, unique_key, prompt)
@@ -112,7 +138,12 @@ def run_pipeline():
             reason = 'Compile failed' if not compiled else 'Test failed'
             print(f"  {reason}. Retry {retry_count}/{max_retries}...")
 
-            retry_prompt = build_retry_prompt(error, java_code, method)
+            retry_prompt = build_retry_prompt(
+                error_message=error,
+                failing_test=java_code,
+                method=method,
+                developer_tests=get_developer_tests_for_method(method, TEST_SUITE_PATH)
+            )
             retry_response = call_llm(retry_prompt)
 
             save_prompt(config.PROMPTS_DIR, full_name,
