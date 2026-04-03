@@ -1,4 +1,6 @@
 import re
+import config
+from src.resource_scanner import is_file_dependent, scan_test_resources
 
 
 def _format_imports(method):
@@ -11,113 +13,79 @@ def _format_imports(method):
     return "\n".join(lines)
 
 
-def _format_dependencies_for_retry(method, generated_test_code):
-    """
-    Returns dependency signatures only for classes that were actually
-    referenced in the generated test code. Javadoc is excluded intentionally
-    — at retry time only the exact type signatures matter.
-    """
+
+def _format_dependency_signatures(method):
     deps = method.get('dependency_signatures', [])
     if not deps:
         return ""
-
-    # Group by class
     by_class = {}
     for d in deps:
         by_class.setdefault(d['class_name'], []).append(d)
-
-    # Only include classes that appear in the generated test
-    referenced_classes = {
-        cls for cls in by_class if cls in generated_test_code
-    }
-
-    if not referenced_classes:
-        return ""
-
-    lines = ["// DEPENDENCY SIGNATURES for classes used in your generated test:"]
-    lines.append("// Use ONLY these exact signatures — do NOT invent method names, parameter types, or constructors.")
-    for class_name in referenced_classes:
-        lines.append(f"//   Class: {class_name}")
-        for d in by_class[class_name]:
-            lines.append(f"//     [{d['kind']}] {d['signature']}")
-
+    lines = ["DEPENDENCY SIGNATURES (only these methods may be called on dependency objects):"]
+    for cls, sigs in by_class.items():
+        lines.append(f"  Class: {cls}")
+        for d in sigs:
+            lines.append(f"    [{d['kind']}] {d['signature']}")
     return "\n".join(lines)
 
 
-def _format_developer_tests(developer_tests):
+def _format_resource_block(method):
     """
-    Formats the developer-written test cases for the method to inject
-    as full context into the base prompt.
-    developer_tests: list of strings, each being a full test file or
-                     a relevant test method extracted from the test suite.
+    If the method is file-dependent, scans TEST_RESOURCES_DIR and returns a
+    prompt section listing available real test resource files.
+    Returns an empty string if the method does not take file parameters.
     """
-    if not developer_tests:
+    if not is_file_dependent(method):
         return ""
-
-    lines = ["// DEVELOPER-WRITTEN TESTS (these are real, passing tests for this class):"]
-    lines.append("// Use these as reference for how to set up objects, which resources to use,")
-    lines.append("// and what assertions are meaningful. Do NOT copy them directly — generate NEW tests.")
-    lines.append("//")
-    for i, test in enumerate(developer_tests, 1):
-        lines.append(f"// --- Reference Test {i} ---")
-        for line in test.splitlines():
-            lines.append(f"// {line}")
-        lines.append("//")
-
+    resources = scan_test_resources(config.TEST_RESOURCES_DIR)
+    if not resources:
+        return ""
+    lines = [
+        "## AVAILABLE TEST RESOURCE FILES",
+        "The following real test files are available in src/test/resources/ and are",
+        "guaranteed to be valid and parseable by PDFBox:",
+        "",
+    ]
+    for ext in sorted(resources):
+        filenames = ", ".join(sorted(resources[ext]))
+        lines.append(f"{ext} files: {filenames}")
+    lines += [
+        "",
+        "Access them in tests using:",
+        '    new File(getClass().getClassLoader().getResource("FILENAME").toURI())',
+        "",
+        "RULES:",
+        "- Always use one of these files for happy path tests that require a valid file input.",
+        "- Never construct file content programmatically for happy path tests.",
+        "- Never use File.createTempFile() for happy path tests — temp files are empty and will fail format parsing.",
+        "- File.createTempFile() is only acceptable when explicitly testing the empty-file or corrupt-file error case.",
+        "- Never hardcode placeholder paths like \"path/to/file.fdf\" or \"validDocument.fdf\".",
+        "- Always include java.net.URISyntaxException in PLANNED IMPORTS when using getResource(). Never include java.net.URL — it is not needed with the single-line pattern.",
+        "- When accessing test resources, always use the single-line pattern: new File(getClass().getClassLoader().getResource(\"FILENAME\").toURI()). Never declare a URL variable — this avoids needing to import java.net.URL.",
+    ]
     return "\n".join(lines)
 
 
-def build_base_prompt(method, developer_tests=None):
+def build_planning_prompt(method):
     """
-    Builds the base generation prompt.
-
-    Args:
-        method: method metadata dict
-        developer_tests: optional list of developer-written test strings
-                         for Approach 1 (full context feeding).
-                         Pass None or empty list for baseline (no context).
+    Step 1 of 2: asks the LLM to produce a structured test plan (no code).
+    The plan includes the exact imports needed and the exact method calls per test.
     """
-    test_class_name = f"{method['class_name']}_{method['method_name']}_Test"
-    package = '.'.join(method['full_name'].split('.')[:-2])
     import_section = _format_imports(method)
-    developer_test_section = _format_developer_tests(developer_tests) if developer_tests else ""
+    dep_section = _format_dependency_signatures(method)
+    resource_block = _format_resource_block(method)
 
-    prompt = f"""You are an expert Java software engineer specializing in writing high-quality JUnit 5 unit tests.
-
-Your task is to write a complete, compilable JUnit 5 test class for the Java method provided below.
-
-=== OUTPUT FORMAT ===
-Output ONLY the raw Java source code. No explanations, no markdown fences, no comments outside the code.
-The output must start with the package declaration.
-
-=== STRICT CONSTRAINTS ===
-1. Test class name MUST be exactly: {test_class_name}
-2. Package MUST be exactly: {package}
-3. For every non-java.lang class you reference in the test, you MUST add an explicit import statement. Copy the exact import line from SOURCE FILE IMPORTS. If a class is not in that list and is not a JUnit 5 / Java SE class, do NOT use it.
-4. Do NOT use internal implementation classes (e.g. classes whose names start with RandomAccess*, *Buffered*, *Parser, *Reader) in your test — only use the public API types needed to call the method and verify its return value.
-5. NEVER pass bare null to any overloaded method. Always cast null to the exact parameter type (e.g. `(File) null`, `(InputStream) null`, `(String) null`).
-6. Do NOT access private fields or methods of any class.
-7. Do NOT test private implementation details — test observable behavior through the public API only.
-8. If you receive an object as the return value of a dependency method and its class is not listed in DEPENDENCY SIGNATURES, do not call any methods on it. Only assert that it is not null.
-
-=== TEST QUALITY REQUIREMENTS ===
-- Write 2-3 focused test methods covering: the normal/happy-path, at least one edge case (null, empty, boundary), and expected exceptions if the method declares any throws.
-- Annotate each test with @Test and give it a descriptive camelCase name that states what is being tested.
-- Include at least one specific assertion per test (use assertEquals, assertThrows, assertNotNull with a follow-up check, etc.).
-- Use @BeforeEach for shared setup if the method requires object instantiation.
-- If the method throws a checked exception, declare `throws <ExceptionType>` on the test method signature rather than wrapping in try-catch, unless you are specifically testing for that exception with assertThrows.
-- Do NOT use Mockito or any mocking framework unless it is in the source imports.
+    prompt = f"""You are an expert Java software engineer. Your task is to produce a structured TEST PLAN for a JUnit 5 test class. Do NOT write any Java code — output only the plan as described below.
 
 === METHOD UNDER TEST ===
-// Signature:
-{method.get('signature', '')}
+Signature: {method.get('signature', '')}
 """
 
     if method.get('javadoc'):
-        prompt += f"\n// Javadoc:\n{method['javadoc']}\n"
+        prompt += f"Javadoc: {method['javadoc']}\n"
 
     prompt += f"""
-// Implementation:
+Implementation:
 {method.get('body', '')}
 
 """
@@ -125,14 +93,97 @@ The output must start with the package declaration.
     if import_section:
         prompt += import_section + "\n\n"
 
-    if developer_test_section:
-        prompt += developer_test_section + "\n\n"
+    if dep_section:
+        prompt += dep_section + "\n\n"
 
-    prompt += "\nGenerate the test class now:"
+    if resource_block:
+        prompt += resource_block + "\n\n"
+
+    prompt += f"""=== HARD RULES ===
+1. You MUST NOT reference any method that is not listed in DEPENDENCY SIGNATURES. Every method call you plan must appear verbatim in that list under the correct class.
+2. Write each planned method call as ClassName.methodName(ParamType1, ParamType2) so it is unambiguous.
+3. For PLANNED IMPORTS, you MUST only list imports that appear in SOURCE FILE IMPORTS, plus JUnit 5 (org.junit.jupiter.api.*) and Java SE (java.*) classes. Do NOT invent or add any other import. Always include java.net.URISyntaxException when using getResource(). Never include java.net.URL — it is not needed.
+4. Do NOT plan to use Mockito or any mocking framework.
+5. Do NOT plan to access private fields or methods.
+6. NEVER plan to pass bare null to an overloaded method — always plan to cast it (e.g. (File) null).
+7. Never plan chained method calls. Every method return value must be assigned to a named variable before calling methods on it.
+8. Never use File.createTempFile() for happy path tests. Always use a real resource file from AVAILABLE TEST RESOURCE FILES above for valid-input tests.
+9. Never hardcode placeholder file paths. Use getClass().getClassLoader().getResource("FILENAME").toURI() with a filename from AVAILABLE TEST RESOURCE FILES.
+10. Never plan assertThrows(IOException.class, () -> method(null)). Passing null to a method that dereferences it throws NullPointerException, not a checked exception. Plan null input tests with assertThrows(NullPointerException.class, ...) or avoid null input tests entirely.
+
+=== REQUIRED OUTPUT FORMAT ===
+Output exactly the following structure. Fill in each section — do not skip any.
+
+PLANNED IMPORTS:
+- <exact import statement>
+- <exact import statement>
+...
+
+TEST METHODS:
+1. <camelCase test method name>
+   Scenario: <one sentence describing what this test verifies>
+   Setup: <objects to instantiate and how, or "none">
+   Method calls: <ClassName.methodName(ParamType), ...>
+   Assertions: <exact assertion type and what is being checked>
+
+2. <camelCase test method name>
+   Scenario: ...
+   Setup: ...
+   Method calls: ...
+   Assertions: ...
+
+(2-3 test methods total covering: happy path, edge case, and expected exception if the method declares throws)
+
+Output the plan now:"""
+
     return prompt
 
 
-def build_retry_prompt(error_message, failing_test, method, developer_tests=None):
+def build_generation_from_plan_prompt(method, plan):
+    """
+    Step 2 of 2: asks the LLM to generate the test class by implementing the plan exactly.
+    Imports are restricted to exactly what was listed in the plan.
+    """
+    test_class_name = f"{method['class_name']}_{method['method_name']}_Test"
+    package = '.'.join(method['full_name'].split('.')[:-2])
+
+    prompt = f"""You are an expert Java software engineer. Implement the following test plan as a complete, compilable JUnit 5 test class.
+
+=== TEST PLAN ===
+{plan}
+
+=== METHOD UNDER TEST ===
+Signature: {method.get('signature', '')}
+
+Implementation:
+{method.get('body', '')}
+
+=== HARD RULES ===
+1. Test class name MUST be exactly: {test_class_name}
+2. Package MUST be exactly: {package}
+3. Implement EXACTLY the test methods listed in the plan — same names, same method calls, same assertions. Do NOT add, remove, or rename any test method.
+4. ONLY add import statements that are listed verbatim in the PLANNED IMPORTS section of the plan. Do NOT add any import that is not in that list.
+5. Do NOT use any class, method, or constructor that is not in the plan.
+6. NEVER pass bare null to an overloaded method — cast it as specified in the plan (e.g. (File) null).
+7. Do NOT access private fields or methods.
+8. Do NOT use Mockito or any mocking framework.
+9. If the method throws a checked exception, declare `throws <ExceptionType>` on the test method rather than wrapping in try-catch, unless the plan uses assertThrows.
+10. Never chain method calls. Always assign return values to named variables before calling methods on them.
+11. Never construct file content programmatically for happy path tests. Use the resource files specified in the plan.
+12. Never hardcode placeholder file paths. Use getClass().getClassLoader().getResource() as specified in the plan.
+13. Never pass a raw InputStream or FileInputStream where a RandomAccessRead is required. Wrap it using RandomAccessReadBuffer or RandomAccessReadBufferedFile as appropriate.
+14. Never write assertThrows(IOException.class, () -> method(null)). Passing null to a method that dereferences it throws NullPointerException, not a checked exception. Test null inputs with assertThrows(NullPointerException.class, ...) or avoid null input tests entirely.
+
+=== OUTPUT FORMAT ===
+Output ONLY the raw Java source code. No explanations, no markdown fences.
+The output must start with the package declaration.
+
+Generate the test class now:"""
+
+    return prompt
+
+
+def build_retry_prompt(error_message, failing_test, method):
     """
     Builds the retry prompt when the generated test fails.
 
@@ -140,14 +191,11 @@ def build_retry_prompt(error_message, failing_test, method, developer_tests=None
         error_message: compiler or runtime error string
         failing_test: the generated test code that failed
         method: method metadata dict
-        developer_tests: optional list of developer-written test strings.
-                         Pass the same value used in build_base_prompt.
     """
     test_class_name = f"{method['class_name']}_{method['method_name']}_Test"
     package = '.'.join(method['full_name'].split('.')[:-2])
     import_section = _format_imports(method)
-    dep_section = _format_dependencies_for_retry(method, failing_test)
-    developer_test_section = _format_developer_tests(developer_tests) if developer_tests else ""
+    dep_section = _format_dependency_signatures(method)
 
     prompt = f"""The JUnit 5 test you generated previously failed. Carefully read the error, identify the root cause, and produce a fully corrected version.
 
@@ -167,25 +215,21 @@ def build_retry_prompt(error_message, failing_test, method, developer_tests=None
 === STRICT CONSTRAINTS ===
 1. Class name MUST be exactly: {test_class_name}
 2. Package MUST be exactly: {package}
-3. Fix ONLY what the error points to — do NOT rewrite parts that were correct.
-4. Use ONLY the method signatures listed under DEPENDENCY SIGNATURES — do NOT invent names, parameter types, or constructors.
+3. Fix ONLY the specific line the error points to. Do NOT rewrite parts that were correct. Do NOT introduce any new class or method that is not already present in the failing test.
+4. You MUST ONLY call methods listed in ALLOWED DEPENDENCY SIGNATURES below. Do NOT call any method not in that list.
 5. For every non-java.lang class you reference, add an explicit import. Copy the exact import line from SOURCE FILE IMPORTS. If a class is not listed there and is not a JUnit 5 / Java SE class, remove it from the test.
 6. Do NOT use internal implementation classes — only use public API types needed to call the method and verify its return value.
 7. NEVER pass bare null to any overloaded method. Always cast: `(File) null`, `(InputStream) null`, `(String) null`.
-8. Do NOT call any method not listed in DEPENDENCY SIGNATURES, even if you can see it called inside the method implementation body.
-9. Do NOT access private fields or methods of any class.
-10. Do NOT guess constructors — only instantiate a class if its constructor is explicitly listed in DEPENDENCY SIGNATURES.
-11. If a meaningful test cannot be written, produce the simplest test that compiles and passes.
-12. If you receive an object as the return value of a dependency method and its class is not listed in DEPENDENCY SIGNATURES, do not call any methods on it. Only assert that it is not null.
+8. Do NOT access private fields or methods of any class.
+9. Never chain method calls. Always assign return values to named variables before calling methods on them.
+10. If a meaningful test cannot be written, produce the simplest test that compiles and passes.
 
 === ERROR DIAGNOSIS GUIDE ===
 - "reference to X is ambiguous" → you passed uncast null to an overloaded method. Cast it: (ExpectedType) null.
-- "cannot find symbol: method X" → that method does not exist. Check DEPENDENCY SIGNATURES and use only what is listed.
+- "cannot find symbol: method X" → that method does not exist on that class. Check ALLOWED DEPENDENCY SIGNATURES.
 - "cannot find symbol: class X" → missing import or class does not exist. Check SOURCE FILE IMPORTS.
 - "cannot be instantiated" → the class is abstract. Do not instantiate it directly.
-- "no suitable constructor found" → you guessed the constructor. Check DEPENDENCY SIGNATURES for the correct one.
-- "does not override or implement" → your method signature does not match the supertype. Check the exact signature in DEPENDENCY SIGNATURES.
-- "has private access" → you accessed a private member. Only use public API visible in DEPENDENCY SIGNATURES.
+- "has private access" → you accessed a private member. Only use the public API.
 
 === OUTPUT FORMAT ===
 Output ONLY the corrected raw Java source code, starting with the package declaration. No explanations.
@@ -196,9 +240,76 @@ Output ONLY the corrected raw Java source code, starting with the package declar
         prompt += import_section + "\n\n"
 
     if dep_section:
-        prompt += dep_section + "\n\n"
+        prompt += "=== ALLOWED DEPENDENCY SIGNATURES ===\n" + dep_section + "\n\n"
 
-    if developer_test_section:
-        prompt += developer_test_section + "\n\n"
+    prompt += "\nGenerate the corrected test class now:"
+    return prompt
+
+
+def build_allowlist_violation_prompt(violations, generated_test, method):
+    """
+    Builds a prompt when the generated test calls methods that are not in
+    dependency_signatures (hallucinated methods).
+
+    Args:
+        violations: list of "ClassName.methodName" strings that were hallucinated
+        generated_test: the generated test code that failed the allowlist check
+        method: method metadata dict
+    """
+    test_class_name = f"{method['class_name']}_{method['method_name']}_Test"
+    package = '.'.join(method['full_name'].split('.')[:-2])
+    import_section = _format_imports(method)
+
+    # Build full allowlist section from all dependency_signatures
+    deps = method.get('dependency_signatures', [])
+    by_class = {}
+    for d in deps:
+        by_class.setdefault(d['class_name'], []).append(d)
+
+    allowlist_lines = ["// ALLOWED DEPENDENCY SIGNATURES (use ONLY these — no other methods):"]
+    for cls, sigs in by_class.items():
+        allowlist_lines.append(f"//   Class: {cls}")
+        for d in sigs:
+            allowlist_lines.append(f"//     [{d['kind']}] {d['signature']}")
+    allowlist_section = "\n".join(allowlist_lines)
+
+    violations_str = "\n".join(f"  - {v}" for v in violations)
+
+    prompt = f"""The test you generated calls methods that do NOT exist in the allowed dependency signatures. These hallucinated methods will cause compilation or runtime failures.
+
+=== HALLUCINATED METHODS (these do not exist — remove or replace them) ===
+{violations_str}
+
+=== GENERATED TEST (contains hallucinated calls) ===
+{generated_test}
+
+=== METHOD UNDER TEST ===
+// Signature:
+{method.get('signature', '')}
+
+// Implementation:
+{method.get('body', '')}
+
+=== STRICT CONSTRAINTS ===
+1. Class name MUST be exactly: {test_class_name}
+2. Package MUST be exactly: {package}
+3. You MUST NOT call any method listed under HALLUCINATED METHODS above.
+4. You MUST ONLY call methods explicitly listed in ALLOWED DEPENDENCY SIGNATURES below.
+5. Do NOT invent method names, parameter types, or constructors — use only what is in the allowlist.
+6. For every non-java.lang class you reference, add an explicit import from SOURCE FILE IMPORTS.
+7. NEVER pass bare null to any overloaded method — always cast it (e.g. (File) null).
+8. Do NOT access private fields or methods.
+
+=== OUTPUT FORMAT ===
+Output ONLY the corrected raw Java source code, starting with the package declaration. No explanations.
+
+"""
+
+    if import_section:
+        prompt += import_section + "\n\n"
+
+    if allowlist_section:
+        prompt += allowlist_section + "\n\n"
+
     prompt += "\nGenerate the corrected test class now:"
     return prompt

@@ -13,10 +13,12 @@ PDFBOX_DIR = os.path.join(BASE_DIR, 'pdfbox')
 GENERATED_TESTS_DIR = os.path.join(PDFBOX_DIR, 'generated_tests')
 PROMPTS_DIR         = os.path.join(BASE_DIR, 'prompts')
 RESPONSES_DIR       = os.path.join(BASE_DIR, 'responses')
+PLANS_DIR           = os.path.join(BASE_DIR, 'plans')
 RESULTS_DIR         = os.path.join(BASE_DIR, 'results')
 RESULTS_JSON        = os.path.join(RESULTS_DIR, 'results.json')
 FINAL_REPORT        = os.path.join(RESULTS_DIR, 'final_report.txt')
 INPUT_JSON          = os.path.join(BASE_DIR, 'extracted_metadata_final.json')
+TEST_RESOURCES_DIR  = os.path.join(PDFBOX_DIR, 'src', 'test', 'resources')
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # ============================================
 # LLM SETTINGS
