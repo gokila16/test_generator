@@ -14,6 +14,8 @@ from src.maven_runner import compile_and_run
 from src.result_tracker import (load_results, save_result,
                                  is_already_processed)
 from src.reporter import print_progress, print_final_report
+from src.context_loader import load_context_data, get_dependency_chain, get_caller_snippets
+from src.java_post_processor import post_process_java
 
 def assign_unique_keys(methods):
     """Assign a unique results.json key and overload index to each method.
@@ -39,6 +41,11 @@ def run_pipeline():
     print("PIPELINE STEP 3: TEST GENERATION")
     print("=" * 40)
 
+    # Load context data once at startup
+    dep_chains, call_graph = load_context_data(
+        config.DEPENDENCY_CHAINS_FILE, config.CALL_GRAPH_FILE
+    )
+
     # Load methods and assign unique keys for overloads
     methods = assign_unique_keys(load_methods(config.INPUT_JSON))
 
@@ -62,7 +69,9 @@ def run_pipeline():
         print(f"\n[{i+1}/{len(remaining)}] {method_name}")
 
         # ---- STEP 1: PLANNING ----
-        plan_prompt    = build_planning_prompt(method)
+        dep_chain       = get_dependency_chain(dep_chains, method)
+        caller_snippets = get_caller_snippets(call_graph, method, max_snippets=2)
+        plan_prompt     = build_planning_prompt(method, dep_chain=dep_chain, caller_snippets=caller_snippets)
         plan_response  = call_llm(plan_prompt)
 
         save_prompt(config.PROMPTS_DIR, unique_key, plan_prompt, is_plan=True)
@@ -93,7 +102,7 @@ def run_pipeline():
             })
             continue
 
-        java_code = extract_java_code(response)
+        java_code = post_process_java(extract_java_code(response))
         if not java_code:
             save_result(config.RESULTS_JSON, unique_key, {
                 'status':          'EXTRACTION_FAILED',
@@ -139,13 +148,13 @@ def run_pipeline():
                 print("  No LLM response on allowlist retry.")
                 break
 
-            new_java = extract_java_code(violation_response)
+            new_java = post_process_java(extract_java_code(violation_response))
             if new_java:
                 java_code = new_java
             else:
                 print("  Could not extract Java code on allowlist retry.")
                 break
-            
+
         if not allowlist_passed:
             save_result(config.RESULTS_JSON, unique_key, {
                 'status':               'ALLOWLIST_FAILED',
@@ -205,7 +214,7 @@ def run_pipeline():
                 })
                 break
 
-            retry_java = extract_java_code(retry_response)
+            retry_java = post_process_java(extract_java_code(retry_response))
             if not retry_java:
                 retry_succeeded = False
                 break
@@ -242,7 +251,7 @@ def run_pipeline():
                     print("  No LLM response on allowlist retry.")
                     break
 
-                new_java = extract_java_code(violation_response)
+                new_java = post_process_java(extract_java_code(violation_response))
                 if new_java:
                     retry_java = new_java
                 else:

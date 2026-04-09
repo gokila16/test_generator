@@ -66,7 +66,78 @@ def _format_resource_block(method):
     return "\n".join(lines)
 
 
-def build_planning_prompt(method):
+_SKIP_STRATEGIES = {'skip', 'unknown', 'unresolvable_abstract', 'private_constructor'}
+
+
+def _format_construction_section(dep_chain):
+    """
+    Formats the HOW TO CONSTRUCT EACH INPUT section from a dep_chain entry.
+    Skips params with unresolvable strategies and notes them as TODOs.
+    Returns empty string if dep_chain is None or has no params/receiver.
+    """
+    if not dep_chain:
+        return ""
+
+    lines = [
+        "## HOW TO CONSTRUCT EACH INPUT",
+        "Use these exact construction statements in your plan. Do not invent alternatives.",
+        "",
+    ]
+
+    receiver = dep_chain.get('receiver')
+    if receiver:
+        if receiver.get('strategy') in _SKIP_STRATEGIES:
+            lines.append("Receiver (declaring class instance):")
+            lines.append("  // TODO: receiver could not be resolved — do not guess construction code.")
+        else:
+            lines.append("Receiver (declaring class instance):")
+            lines.append(f"  {receiver.get('construction', '')}")
+        lines.append("")
+
+    params = dep_chain.get('params') or []
+    for i, p in enumerate(params, 1):
+        strategy = p.get('strategy', '')
+        if strategy == 'skip':
+            continue  # output-type param — exclude entirely
+        lines.append(f"Parameter {i}: {p.get('type', '')} {p.get('name', '')}")
+        if strategy in _SKIP_STRATEGIES:
+            lines.append(f"  // TODO: parameter could not be resolved — do not invent construction code for it.")
+        else:
+            lines.append(f"  Strategy: {strategy}")
+            lines.append(f"  Construction: {p.get('construction', '')}")
+        lines.append("")
+
+    if len(lines) <= 3:
+        return ""  # nothing useful was added
+    return "\n".join(lines)
+
+
+def _format_caller_snippets(caller_snippets):
+    """
+    Formats the REAL USAGE EXAMPLES section from a list of caller dicts.
+    Returns empty string if list is empty.
+    """
+    if not caller_snippets:
+        return ""
+
+    lines = [
+        "## REAL USAGE EXAMPLES FROM CODEBASE",
+        "The following snippets show how this method is actually called in the PDFBox codebase.",
+        "Use these as reference for realistic test inputs and assertions.",
+        "",
+    ]
+    for i, caller in enumerate(caller_snippets, 1):
+        longname = caller.get('caller_longname', 'unknown')
+        line_no  = caller.get('caller_line', '?')
+        snippet  = caller.get('snippet', '')
+        lines.append(f"Example {i} (from {longname}, line {line_no}):")
+        lines.append(snippet)
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def build_planning_prompt(method, dep_chain=None, caller_snippets=None):
     """
     Step 1 of 2: asks the LLM to produce a structured test plan (no code).
     The plan includes the exact imports needed and the exact method calls per test.
@@ -99,6 +170,14 @@ Implementation:
     if resource_block:
         prompt += resource_block + "\n\n"
 
+    construction_section = _format_construction_section(dep_chain)
+    if construction_section:
+        prompt += construction_section + "\n\n"
+
+    caller_section = _format_caller_snippets(caller_snippets)
+    if caller_section:
+        prompt += caller_section + "\n\n"
+
     prompt += f"""=== HARD RULES ===
 1. You MUST NOT reference any method that is not listed in DEPENDENCY SIGNATURES. Every method call you plan must appear verbatim in that list under the correct class.
 2. Write each planned method call as ClassName.methodName(ParamType1, ParamType2) so it is unambiguous.
@@ -110,6 +189,7 @@ Implementation:
 8. Never use File.createTempFile() for happy path tests. Always use a real resource file from AVAILABLE TEST RESOURCE FILES above for valid-input tests.
 9. Never hardcode placeholder file paths. Use getClass().getClassLoader().getResource("FILENAME").toURI() with a filename from AVAILABLE TEST RESOURCE FILES.
 10. Never plan assertThrows(IOException.class, () -> method(null)). Passing null to a method that dereferences it throws NullPointerException, not a checked exception. Plan null input tests with assertThrows(NullPointerException.class, ...) or avoid null input tests entirely.
+11. You MUST use the exact construction statements provided in HOW TO CONSTRUCT EACH INPUT. Do not invent, simplify, or replace them. If a parameter has no construction provided, write a TODO comment for it and do not guess.
 
 === REQUIRED OUTPUT FORMAT ===
 Output exactly the following structure. Fill in each section — do not skip any.
@@ -173,6 +253,7 @@ Implementation:
 12. Never hardcode placeholder file paths. Use getClass().getClassLoader().getResource() as specified in the plan.
 13. Never pass a raw InputStream or FileInputStream where a RandomAccessRead is required. Wrap it using RandomAccessReadBuffer or RandomAccessReadBufferedFile as appropriate.
 14. Never write assertThrows(IOException.class, () -> method(null)). Passing null to a method that dereferences it throws NullPointerException, not a checked exception. Test null inputs with assertThrows(NullPointerException.class, ...) or avoid null input tests entirely.
+15. Use the exact construction code from the plan setup section verbatim. Do not rewrite, simplify, or replace object construction code. The setup code was pre-verified — copying it exactly is required.
 
 === OUTPUT FORMAT ===
 Output ONLY the raw Java source code. No explanations, no markdown fences.

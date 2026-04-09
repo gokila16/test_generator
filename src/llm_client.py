@@ -1,41 +1,45 @@
 import time
-from openai import OpenAI
+from google import genai
+from google.genai import types
 import config
 
-client = OpenAI(api_key=config.OPENAI_API_KEY)
+client = genai.Client(api_key=config.GEMINI_API_KEY)
 
 def call_llm(prompt):
     """
-    Calls OpenAI API with the given prompt.
+    Calls Gemini API with the given prompt.
     Handles rate limits and errors gracefully.
     Returns raw response text or None if failed.
     """
     try:
-        response = client.chat.completions.create(
+        response = client.models.generate_content(
             model=config.LLM_MODEL,
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=config.LLM_MAX_TOKENS,
-            temperature=config.LLM_TEMPERATURE
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                max_output_tokens=config.LLM_MAX_TOKENS,
+                temperature=config.LLM_TEMPERATURE,
+            )
         )
-        # Sleep to avoid rate limits
         time.sleep(config.API_SLEEP_SEC)
-        return response.choices[0].message.content
+        return response.text
 
     except Exception as e:
         error_str = str(e)
 
         # Rate limit — wait and retry once
-        if '429' in error_str:
+        if '429' in error_str or 'RESOURCE_EXHAUSTED' in error_str:
             print("  Rate limit hit. Waiting 60 seconds...")
             time.sleep(60)
             try:
-                response = client.chat.completions.create(
+                response = client.models.generate_content(
                     model=config.LLM_MODEL,
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=config.LLM_MAX_TOKENS,
-                    temperature=config.LLM_TEMPERATURE
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        max_output_tokens=config.LLM_MAX_TOKENS,
+                        temperature=config.LLM_TEMPERATURE,
+                    )
                 )
-                return response.choices[0].message.content
+                return response.text
             except Exception as e2:
                 print(f"  Retry failed: {e2}")
                 return None
