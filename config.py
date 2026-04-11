@@ -24,6 +24,8 @@ GENERATOR_DIR          = os.path.join(os.path.dirname(BASE_DIR), 'test_generator
 DEPENDENCY_CHAINS_FILE = os.path.join(GENERATOR_DIR, 'dependency_chains.json')
 CALL_GRAPH_FILE        = os.path.join(PDFBOX_DIR, 'call_graph.json')
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+VERTEX_PROJECT  = "project-4b6556ed-0771-4944-982"
+VERTEX_LOCATION = "us-central1"
 # ============================================
 # LLM SETTINGS
 # ============================================

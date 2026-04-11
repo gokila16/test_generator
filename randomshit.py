@@ -1,15 +1,13 @@
-from src.context_loader import load_context_data, get_dependency_chain
-import config
+from google import genai
 
-dep_chains, call_graph = load_context_data(
-    config.DEPENDENCY_CHAINS_FILE, config.CALL_GRAPH_FILE
+client = genai.Client(
+    vertexai=True,
+    project="project-4b6556ed-0771-4944-982",
+    location="us-central1"
 )
 
-# Simulate both overloads
-m1 = {"full_name": "org.apache.pdfbox.Loader.loadFDF",
-      "signature": "public static FDFDocument loadFDF(File file) throws IOException"}
-m2 = {"full_name": "org.apache.pdfbox.Loader.loadFDF",
-      "signature": "public static FDFDocument loadFDF(InputStream input) throws IOException"}
-
-print(get_dependency_chain(dep_chains, m1))
-print(get_dependency_chain(dep_chains, m2))
+response = client.models.generate_content(
+    model="gemini-2.5-flash",
+    contents="Say hello!"
+)
+print(response.text) 

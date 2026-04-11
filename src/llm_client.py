@@ -3,7 +3,11 @@ from google import genai
 from google.genai import types
 import config
 
-client = genai.Client(api_key=config.GEMINI_API_KEY)
+client = genai.Client(
+    vertexai=True,
+    project=config.VERTEX_PROJECT,
+    location=config.VERTEX_LOCATION,
+)
 
 def call_llm(prompt):
     """
