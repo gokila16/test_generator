@@ -13,16 +13,24 @@ PDFBOX_DIR = os.path.join(BASE_DIR, 'pdfbox')
 GENERATED_TESTS_DIR = os.path.join(PDFBOX_DIR, 'generated_tests')
 PROMPTS_DIR         = os.path.join(BASE_DIR, 'prompts')
 RESPONSES_DIR       = os.path.join(BASE_DIR, 'responses')
+PLANS_DIR           = os.path.join(BASE_DIR, 'plans')
 RESULTS_DIR         = os.path.join(BASE_DIR, 'results')
 RESULTS_JSON        = os.path.join(RESULTS_DIR, 'results.json')
 FINAL_REPORT        = os.path.join(RESULTS_DIR, 'final_report.txt')
 INPUT_JSON          = os.path.join(BASE_DIR, 'extracted_metadata_final.json')
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+TEST_RESOURCES_DIR  = os.path.join(PDFBOX_DIR, 'src', 'test', 'resources')
+
+GENERATOR_DIR          = os.path.join(os.path.dirname(BASE_DIR), 'test_generator')
+DEPENDENCY_CHAINS_FILE = os.path.join(GENERATOR_DIR, 'dependency_chains.json')
+CALL_GRAPH_FILE        = os.path.join(PDFBOX_DIR, 'call_graph.json')
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+VERTEX_PROJECT  = "project-4b6556ed-0771-4944-982"
+VERTEX_LOCATION = "us-central1"
 # ============================================
 # LLM SETTINGS
 # ============================================
-LLM_MODEL       = 'gpt-4o-mini'
-LLM_MAX_TOKENS  = 1500
+LLM_MODEL       = 'gemini-2.5-flash'
+LLM_MAX_TOKENS  = 8192
 LLM_TEMPERATURE = 0
 API_SLEEP_SEC   = 1
 MAX_RETRIES = 2

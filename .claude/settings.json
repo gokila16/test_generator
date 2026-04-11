@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Harini/Documents/thesis_research/PDFBOX-v5/pdfbox/src/test/java/**)",
+      "Bash(python -)",
+      "Bash(python -c \"import javalang; print\\(javalang.__version__\\)\")",
+      "Read(//c/Users/Harini/Documents/thesis_research/PDFBOX-v5/pdfbox/**)"
+    ]
+  }
+}
