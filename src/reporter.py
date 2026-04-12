@@ -44,8 +44,35 @@ def print_final_report(results, report_path, start_time):
         f"Retry triggered:   {retried}",
         f"Retry succeeded:   {retry_success}",
         f"Total time:        {elapsed} minutes",
-        "=" * 40,
     ]
+
+    # Path breakdown (only present when pipeline_v5 has run)
+    path_counts = {}
+    for r in results.values():
+        p = r.get('path')
+        if p:
+            path_counts[p] = path_counts.get(p, 0) + 1
+
+    if path_counts:
+        lines.append("")
+        lines.append("--- Path breakdown ---")
+        for path, count in sorted(path_counts.items()):
+            pct = count / total * 100 if total > 0 else 0
+            lines.append(f"  {path:<30} {count} ({pct:.1f}%)")
+
+        # How often the resource fallback actually passed
+        fallback_total = path_counts.get('complex_resource_fallback', 0)
+        fallback_passed = sum(
+            1 for r in results.values()
+            if r.get('path') == 'complex_resource_fallback'
+            and r.get('status') == 'PASSED'
+        )
+        if fallback_total:
+            lines.append(
+                f"  resource_fallback passed: {fallback_passed}/{fallback_total}"
+            )
+
+    lines.append("=" * 40)
 
     report = '\n'.join(lines)
     print(report)

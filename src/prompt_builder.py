@@ -137,7 +137,61 @@ def _format_caller_snippets(caller_snippets):
     return "\n".join(lines)
 
 
-def build_planning_prompt(method, dep_chain=None, caller_snippets=None):
+def _format_checklist_section(checklist: dict) -> str:
+    """
+    Formats the BRANCH CHECKLIST section injected into the planning prompt
+    when the complex path has a validated checklist available.
+    """
+    if not checklist:
+        return ""
+    branch_plan = checklist.get('branch_plan') or []
+    if not branch_plan:
+        return ""
+
+    lines = [
+        "=== BRANCH CHECKLIST ===",
+        "Plan exactly one test method per scenario below. Do not add or remove scenarios.",
+        "",
+    ]
+    for i, entry in enumerate(branch_plan, 1):
+        name     = entry.get('name', f'test{i}')
+        scenario = entry.get('scenario', '')
+        branch   = entry.get('branch', '')
+        expected = entry.get('expected', '')
+        lines.append(f"{i}. {name}")
+        if scenario:
+            lines.append(f"   Scenario: {scenario}")
+        if branch:
+            lines.append(f"   Branch: {branch}")
+        if expected:
+            lines.append(f"   Expected: {expected}")
+    return "\n".join(lines)
+
+
+def _format_resources_section(resources: dict) -> str:
+    """
+    Formats the PRE-BUILT RESOURCES section injected into the planning prompt
+    when the complex path has validated resource constructions available.
+    The LLM is told to reference these variable names in Setup without
+    re-writing the construction code (the assembler will inject it).
+    """
+    if not resources:
+        return ""
+
+    lines = [
+        "=== PRE-BUILT RESOURCES ===",
+        "These variables will be available in the test — reference them by name in Setup.",
+        "Do NOT write construction code for them; it will be injected automatically.",
+        "",
+    ]
+    for var_name, res in resources.items():
+        type_name = res.get('type', '')
+        lines.append(f"  {type_name} {var_name}  — {res.get('construction', '').strip()}")
+    return "\n".join(lines)
+
+
+def build_planning_prompt(method, dep_chain=None, caller_snippets=None,
+                          checklist=None, resources=None):
     """
     Step 1 of 2: asks the LLM to produce a structured test plan (no code).
     The plan includes the exact imports needed and the exact method calls per test.
@@ -177,6 +231,14 @@ Implementation:
     caller_section = _format_caller_snippets(caller_snippets)
     if caller_section:
         prompt += caller_section + "\n\n"
+
+    checklist_section = _format_checklist_section(checklist)
+    if checklist_section:
+        prompt += checklist_section + "\n\n"
+
+    resources_section = _format_resources_section(resources)
+    if resources_section:
+        prompt += resources_section + "\n\n"
 
     prompt += f"""=== HARD RULES ===
 1. You MUST NOT reference any method that is not listed in DEPENDENCY SIGNATURES. Every method call you plan must appear verbatim in that list under the correct class.
@@ -393,4 +455,228 @@ Output ONLY the corrected raw Java source code, starting with the package declar
         prompt += allowlist_section + "\n\n"
 
     prompt += "\nGenerate the corrected test class now:"
+    return prompt
+
+
+# ============================================================
+# COMPLEX PATH — CHECKLIST AGENT PROMPTS
+# ============================================================
+
+def build_checklist_prompt(method, dep_chain, resource_files, caller_snippets):
+    """
+    Asks the LLM to produce a structured test checklist for a complex method:
+    - BRANCH PLAN: one entry per distinct execution branch to test
+    - RESOURCE SPEC: what fixture objects / typed inputs are needed
+    - INPUT TYPES: param-level type mapping
+
+    dep_chain and resource_files provide construction context so the LLM
+    can name realistic variable types.  caller_snippets give usage examples.
+    """
+    dep_section        = _format_dependency_signatures(method)
+    construction       = _format_construction_section(dep_chain)
+    resource_block     = _format_resource_block(method)
+    caller_section     = _format_caller_snippets(caller_snippets)
+
+    # Summarise resource files for the prompt
+    resource_file_list = ""
+    if resource_files:
+        sample = sorted(resource_files)[:10]
+        resource_file_list = "Available test resource files: " + ", ".join(sample)
+
+    prompt = f"""You are an expert Java software engineer.
+Your task is to produce a STRUCTURED TEST CHECKLIST for the method below.
+Do NOT write any Java code — output only the checklist as specified.
+
+=== METHOD UNDER TEST ===
+Signature: {method.get('signature', '')}
+"""
+    if method.get('javadoc'):
+        prompt += f"Javadoc: {method['javadoc']}\n"
+    prompt += f"""
+Implementation:
+{method.get('body', '')}
+
+"""
+    if dep_section:
+        prompt += dep_section + "\n\n"
+    if construction:
+        prompt += construction + "\n\n"
+    if resource_block:
+        prompt += resource_block + "\n\n"
+    if resource_file_list:
+        prompt += resource_file_list + "\n\n"
+    if caller_section:
+        prompt += caller_section + "\n\n"
+
+    prompt += """=== REQUIRED OUTPUT FORMAT ===
+Output exactly the following three sections. Do not add prose outside them.
+
+BRANCH PLAN:
+1. <camelCase test method name>
+   Scenario: <one sentence — what behaviour this test exercises>
+   Branch: <which if/else/exception branch or code path is covered>
+   Expected: <what the correct outcome is>
+
+2. <next test method name>
+   Scenario: ...
+   Branch: ...
+   Expected: ...
+
+(2–4 entries — cover happy path, each significant branch, and any declared exception)
+
+RESOURCE SPEC:
+- <JavaType> <varName>: <one-line description of what this object represents>
+(list every fixture or typed input the tests will need — omit primitives and String literals)
+
+INPUT TYPES:
+- <paramName>: <JavaType> — <brief description>
+(one entry per method parameter)
+
+Output the checklist now:"""
+
+    return prompt
+
+
+def build_checklist_fix_prompt(checklist: dict, issues: list, method: dict) -> str:
+    """
+    Asks the LLM to fix a checklist that failed validation.
+    issues is a list of plain-English problem descriptions.
+    """
+    import json
+    checklist_text = json.dumps(checklist, indent=2)
+    issues_text    = "\n".join(f"  - {issue}" for issue in issues)
+
+    prompt = f"""The test checklist below failed validation. Fix it so that all listed issues are resolved.
+
+=== METHOD UNDER TEST ===
+Signature: {method.get('signature', '')}
+
+=== FAILING CHECKLIST ===
+{checklist_text}
+
+=== VALIDATION ISSUES ===
+{issues_text}
+
+=== RULES ===
+1. Keep all scenario entries that are already correct — do not remove them.
+2. Add or fix entries to address every issue listed above.
+3. Every BRANCH PLAN entry must have: name, Scenario, Branch, Expected.
+4. RESOURCE SPEC entries must use real Java types present in the method's dependency signatures.
+5. Do not write Java code.
+
+=== REQUIRED OUTPUT FORMAT ===
+Output the corrected checklist using the exact same format:
+
+BRANCH PLAN:
+1. <name>
+   Scenario: ...
+   Branch: ...
+   Expected: ...
+
+RESOURCE SPEC:
+- <JavaType> <varName>: <description>
+
+INPUT TYPES:
+- <paramName>: <JavaType> — <description>
+
+Output the corrected checklist now:"""
+
+    return prompt
+
+
+# ============================================================
+# COMPLEX PATH — RESOURCE GENERATOR AGENT PROMPTS
+# ============================================================
+
+def build_resource_generation_prompt(method, checklist, dep_chain, resource_files):
+    """
+    Asks the LLM to produce Java construction statements for each fixture
+    listed in the checklist's RESOURCE SPEC.  The output is pure Java
+    variable declarations — no class wrapper, no method wrapper.
+    """
+    dep_section    = _format_dependency_signatures(method)
+    construction   = _format_construction_section(dep_chain)
+    resource_block = _format_resource_block(method)
+
+    resource_spec = checklist.get('resource_spec') or []
+    spec_lines = "\n".join(
+        f"  - {r.get('type','')} {r.get('name','')}: {r.get('description','')}"
+        for r in resource_spec
+    )
+
+    prompt = f"""You are an expert Java software engineer.
+Your task is to write Java variable declaration statements for the test fixtures listed below.
+Output ONLY the variable declarations — no class, no method, no imports.
+
+=== METHOD UNDER TEST ===
+Signature: {method.get('signature', '')}
+
+=== FIXTURES TO CONSTRUCT ===
+{spec_lines if spec_lines else '(none)'}
+
+"""
+    if dep_section:
+        prompt += dep_section + "\n\n"
+    if construction:
+        prompt += construction + "\n\n"
+    if resource_block:
+        prompt += resource_block + "\n\n"
+
+    prompt += f"""=== RULES ===
+1. Each line must be a single complete Java statement ending with a semicolon.
+2. ONLY call methods listed in DEPENDENCY SIGNATURES. Do NOT invent method names.
+3. ONLY use test resource files listed in AVAILABLE TEST RESOURCE FILES (if present).
+4. Use the single-line getResource pattern:
+   new File(getClass().getClassLoader().getResource("FILENAME").toURI())
+5. Never chain method calls — assign every intermediate result to a named variable.
+6. Never use Mockito or any mocking framework.
+7. Never access private fields or methods.
+8. Every variable name must match exactly the name given in FIXTURES TO CONSTRUCT.
+
+=== OUTPUT FORMAT ===
+Output ONLY the raw Java declarations, one per line. No explanations, no code fences.
+
+Example:
+File pdfFile = new File(getClass().getClassLoader().getResource("cweb.pdf").toURI());
+PDDocument doc = PDDocument.load(pdfFile);
+
+Output the declarations now:"""
+
+    return prompt
+
+
+def build_resource_fix_prompt(resources: dict, issues: list, method: dict) -> str:
+    """
+    Asks the LLM to fix resource constructions that failed type-validation.
+    """
+    import json
+    resource_text = "\n".join(
+        r.get('construction', '') for r in resources.values()
+    )
+    issues_text = "\n".join(f"  - {issue}" for issue in issues)
+    dep_section = _format_dependency_signatures(method)
+
+    prompt = f"""The Java resource declarations below failed validation. Fix them.
+
+=== METHOD UNDER TEST ===
+Signature: {method.get('signature', '')}
+
+=== FAILING DECLARATIONS ===
+{resource_text}
+
+=== VALIDATION ISSUES ===
+{issues_text}
+
+=== RULES ===
+1. Keep declarations that are already correct.
+2. Fix only the declarations that have issues.
+3. ONLY call methods listed in DEPENDENCY SIGNATURES below.
+4. Every variable name must remain unchanged.
+5. Output ONLY raw Java declarations, one per line.
+
+"""
+    if dep_section:
+        prompt += dep_section + "\n\n"
+
+    prompt += "\nOutput the corrected declarations now:"
     return prompt

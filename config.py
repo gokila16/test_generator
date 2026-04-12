@@ -34,6 +34,7 @@ LLM_MAX_TOKENS  = 8192
 LLM_TEMPERATURE = 0
 API_SLEEP_SEC   = 1
 MAX_RETRIES = 2
+CLC_THRESHOLD = 5   # methods with CLC >= this, or unresolvable external deps, go through complex path
 # ============================================
 # MAVEN SETTINGS
 # ============================================
