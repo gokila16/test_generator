@@ -14,7 +14,7 @@ from src.maven_runner import compile_and_run
 from src.result_tracker import (load_results, save_result,
                                  is_already_processed)
 from src.reporter import print_progress, print_final_report
-from src.context_loader import load_context_data, get_dependency_chain, get_caller_snippets
+from src.context_loader import load_context_data, load_class_inventory, get_dependency_chain, get_caller_snippets
 from src.java_post_processor import post_process_java
 
 def assign_unique_keys(methods):
@@ -45,6 +45,7 @@ def run_pipeline():
     dep_chains, call_graph = load_context_data(
         config.DEPENDENCY_CHAINS_FILE, config.CALL_GRAPH_FILE
     )
+    class_inventory = load_class_inventory(config.CLASS_INVENTORY_FILE)
 
     # Load methods and assign unique keys for overloads
     methods = assign_unique_keys(load_methods(config.INPUT_JSON))
@@ -64,14 +65,16 @@ def run_pipeline():
         class_name     = method['class_name']
         method_name    = method['method_name']
         overload_index = method['overload_index']
-        test_class     = get_test_class_name(class_name, method_name, overload_index)
+        test_class      = get_test_class_name(class_name, method_name, overload_index)
+        base_test_class = get_test_class_name(class_name, method_name)   # what the LLM always generates
+        package         = '.'.join(full_name.split('.')[:-2])
 
         print(f"\n[{i+1}/{len(remaining)}] {method_name}")
 
         # ---- STEP 1: PLANNING ----
         dep_chain       = get_dependency_chain(dep_chains, method)
         caller_snippets = get_caller_snippets(call_graph, method, max_snippets=2)
-        plan_prompt     = build_planning_prompt(method, dep_chain=dep_chain, caller_snippets=caller_snippets)
+        plan_prompt     = build_planning_prompt(method, dep_chain=dep_chain, caller_snippets=caller_snippets, class_inventory=class_inventory)
         plan_response  = call_llm(plan_prompt)
 
         save_prompt(config.PROMPTS_DIR, unique_key, plan_prompt, is_plan=True)
@@ -102,7 +105,7 @@ def run_pipeline():
             })
             continue
 
-        java_code = post_process_java(extract_java_code(response))
+        java_code = post_process_java(extract_java_code(response), expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
         if not java_code:
             save_result(config.RESULTS_JSON, unique_key, {
                 'status':          'EXTRACTION_FAILED',
@@ -121,7 +124,7 @@ def run_pipeline():
         allowlist_violations = []
 
         while True:
-            allowlist_passed, allowlist_violations = check_against_allowlist(java_code, method)
+            allowlist_passed, allowlist_violations = check_against_allowlist(java_code, method, class_inventory)
             if allowlist_passed:
                 break
 
@@ -148,7 +151,7 @@ def run_pipeline():
                 print("  No LLM response on allowlist retry.")
                 break
 
-            new_java = post_process_java(extract_java_code(violation_response))
+            new_java = post_process_java(extract_java_code(violation_response), expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
             if new_java:
                 java_code = new_java
             else:
@@ -195,7 +198,8 @@ def run_pipeline():
             retry_prompt = build_retry_prompt(
                 error_message=error,
                 failing_test=java_code,
-                method=method
+                method=method,
+                class_inventory=class_inventory,
             )
             retry_response = call_llm(retry_prompt)
 
@@ -214,7 +218,7 @@ def run_pipeline():
                 })
                 break
 
-            retry_java = post_process_java(extract_java_code(retry_response))
+            retry_java = post_process_java(extract_java_code(retry_response), expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
             if not retry_java:
                 retry_succeeded = False
                 break
@@ -224,7 +228,7 @@ def run_pipeline():
             retry_allowlist_violations = []
 
             while True:
-                retry_allowlist_passed, retry_allowlist_violations = check_against_allowlist(retry_java, method)
+                retry_allowlist_passed, retry_allowlist_violations = check_against_allowlist(retry_java, method, class_inventory)
                 if retry_allowlist_passed:
                     break
 
@@ -251,7 +255,7 @@ def run_pipeline():
                     print("  No LLM response on allowlist retry.")
                     break
 
-                new_java = post_process_java(extract_java_code(violation_response))
+                new_java = post_process_java(extract_java_code(violation_response), expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
                 if new_java:
                     retry_java = new_java
                 else:

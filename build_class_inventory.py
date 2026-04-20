@@ -79,20 +79,45 @@ def _process_class(node, package_name, outer_name=None):
         if not has_explicit_ctors and not is_abstract:
             constructors.append({'params': [], 'visibility': 'public'})
 
-    # --- Factory methods ---
+    # --- Factory methods + public instance/static methods ---
     factory_methods = []
+    public_methods  = []
     raw_methods = getattr(node, 'methods', []) or []
+
+    # For interfaces every method is implicitly public even without the keyword
+    is_iface = isinstance(node, javalang.tree.InterfaceDeclaration)
+
     for m in raw_methods:
-        mods = m.modifiers or set()
-        if 'public' in mods and 'static' in mods:
-            ret = m.return_type
-            ret_name = ret.name if ret and hasattr(ret, 'name') else None
-            if ret_name == simple_name:
-                factory_methods.append({
-                    'name':    m.name,
-                    'params':  _param_types(m.parameters or []),
-                    'returns': ret_name,
-                })
+        mods    = m.modifiers or set()
+        vis     = _visibility(mods)
+        is_pub  = vis in ('public', 'protected') or is_iface
+        is_stat = 'static' in mods
+
+        # Return type string
+        ret = m.return_type
+        if ret is None:
+            ret_name = 'void'
+        elif hasattr(ret, 'name'):
+            ret_name = ret.name
+            if hasattr(ret, 'dimensions') and ret.dimensions:
+                ret_name += '[]' * len(ret.dimensions)
+        else:
+            ret_name = str(ret)
+
+        params_str = ', '.join(_param_types(m.parameters or []))
+
+        # Factory methods: public static methods that return the same type
+        if 'public' in mods and is_stat and ret_name == simple_name:
+            factory_methods.append({
+                'name':    m.name,
+                'params':  _param_types(m.parameters or []),
+                'returns': ret_name,
+            })
+
+        # All public/protected methods (instance and static) for the LLM to call
+        if is_pub:
+            sig = f"{'static ' if is_stat else ''}{ret_name} {m.name}({params_str})"
+            public_methods.append(sig)
 
     # --- Interfaces implemented ---
     implements_list = []
@@ -113,17 +138,18 @@ def _process_class(node, package_name, outer_name=None):
                 extends_class = ext[0].name
 
     return {
-        'package_name':          package_name,
-        'class_name':            class_name,
-        'full_name':             full_name,
-        'is_abstract':           is_abstract,
-        'is_interface':          is_interface,
-        'is_enum':               is_enum,
-        'constructors':          constructors,
-        'factory_methods':       factory_methods,
+        'package_name':           package_name,
+        'class_name':             class_name,
+        'full_name':              full_name,
+        'is_abstract':            is_abstract,
+        'is_interface':           is_interface,
+        'is_enum':                is_enum,
+        'constructors':           constructors,
+        'factory_methods':        factory_methods,
+        'public_methods':         public_methods,
         'interfaces_implemented': implements_list,
-        'extends_class':         extends_class,
-        'concrete_subclasses':   [],
+        'extends_class':          extends_class,
+        'concrete_subclasses':    [],
     }
 
 
@@ -264,22 +290,24 @@ def main():
     abstract_count     = sum(1 for e in inventory.values() if e['is_abstract'])
     interface_count    = sum(1 for e in inventory.values() if e['is_interface'])
     enum_count         = sum(1 for e in inventory.values() if e['is_enum'])
-    private_only_count = sum(
+    private_only_count  = sum(
         1 for e in inventory.values()
         if e['constructors']
         and all(c['visibility'] == 'private' for c in e['constructors'])
     )
+    total_methods = sum(len(e['public_methods']) for e in inventory.values())
 
     print("\n" + "=" * 50)
     print("SUMMARY")
     print("=" * 50)
-    print(f"  Files scanned:                {files_total}")
-    print(f"  Parse failures:               {parse_fails}")
-    print(f"  Total classes/interfaces:     {classes_total}")
-    print(f"  Abstract classes:             {abstract_count}")
-    print(f"  Interfaces:                   {interface_count}")
-    print(f"  Enums:                        {enum_count}")
+    print(f"  Files scanned:                   {files_total}")
+    print(f"  Parse failures:                  {parse_fails}")
+    print(f"  Total classes/interfaces:        {classes_total}")
+    print(f"  Abstract classes:                {abstract_count}")
+    print(f"  Interfaces:                      {interface_count}")
+    print(f"  Enums:                           {enum_count}")
     print(f"  Classes with only private ctors: {private_only_count}")
+    print(f"  Total public methods extracted:  {total_methods}")
 
     os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as fh:

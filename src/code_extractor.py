@@ -27,9 +27,9 @@ def extract_java_code(response):
     if match:
         return match.group(1).strip()
 
-    # Pattern 3: starts with import or public class
+    # Pattern 3: starts with package, import, or public class
     match = re.search(
-        r'(import\s+[\w.]+;|public\s+class\s+\w+)',
+        r'(package\s+[\w.]+;|import\s+[\w.]+;|public\s+class\s+\w+)',
         response
     )
     if match:

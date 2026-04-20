@@ -1,6 +1,7 @@
 import time
 from google import genai
 from google.genai import types
+from openai import OpenAI
 import config
 
 client = genai.Client(
@@ -24,6 +25,7 @@ def call_llm(prompt):
                 temperature=config.LLM_TEMPERATURE,
             )
         )
+
         time.sleep(config.API_SLEEP_SEC)
         return response.text
 

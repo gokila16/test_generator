@@ -113,21 +113,78 @@ def _enrich_type_map(java_code, type_map, return_type_map):
             type_map[lhs_var] = inferred_type
 
 
-def check_against_allowlist(java_code, method):
+def _build_inventory_class_names(method):
+    """
+    Returns the set of simple class names extracted from source_file_imports.
+    """
+    import re
+    imports = method.get('source_file_imports', [])
+    names = set()
+    pattern = re.compile(r'import\s+[\w.]*\.([A-Z][A-Za-z0-9_]*)\s*;')
+    for imp in imports:
+        m = pattern.search(imp)
+        if m:
+            names.add(m.group(1))
+    return names
+
+
+def _build_inventory_method_allowlist(method, class_inventory):
+    """
+    Builds a set of (class_name, method_name) pairs from the public_methods
+    list in class_inventory for every class in source_file_imports.
+
+    Used to validate calls on inventory classes — the LLM can call any method
+    listed here, but hallucinated names that don't exist in public_methods
+    are flagged.
+
+    Returns an empty dict if class_inventory is not provided.
+    """
+    if not class_inventory:
+        return {}
+
+    import re
+    import_pattern = re.compile(r'import\s+([\w.]+);')
+    method_name_pattern = re.compile(r'\b([A-Za-z_][A-Za-z0-9_]*)\s*\(')
+
+    allowed = {}   # class_name (simple) -> set of method names
+    for imp in method.get('source_file_imports', []):
+        m = import_pattern.search(imp)
+        if not m:
+            continue
+        full_name = m.group(1)
+        entry = class_inventory.get(full_name)
+        if not entry:
+            continue
+        simple = entry.get('class_name', full_name.split('.')[-1])
+        method_names = set()
+        for sig in entry.get('public_methods', []):
+            mn = method_name_pattern.search(sig)
+            if mn:
+                method_names.add(mn.group(1))
+        # Also allow factory method names
+        for fm in entry.get('factory_methods', []):
+            method_names.add(fm['name'])
+        allowed[simple] = method_names
+    return allowed
+
+
+def check_against_allowlist(java_code, method, class_inventory=None):
     """
     Checks that the generated test only calls methods that exist in
-    dependency_signatures, using class-qualified resolution where possible.
+    dependency_signatures or in public_methods from class_inventory.
 
     Strategy:
     - Build a type map from variable declarations (VarName -> ClassName).
     - For every `receiver.methodName(` call found in the code:
         - If receiver is a JUnit assertions class -> skip (always allowed).
         - If methodName is a universal Java Object method -> skip.
-        - If receiver maps to a known class via type_map:
-            -> check (ClassName, methodName) against the allowlist.
-        - If receiver starts with uppercase (likely a static/class-level call)
-          and that class is in dependency_signatures:
-            -> check (ReceiverAsClass, methodName) against the allowlist.
+        - If receiver maps to a class in dep_classes:
+            -> check (ClassName, methodName) against the dep allowlist.
+        - If receiver maps to a class in inventory_classes:
+            -> if class_inventory provided, check against public_methods list.
+            -> if class_inventory not provided, skip (no false positive).
+        - If receiver starts with uppercase (static call) and is in dep_classes:
+            -> check (ReceiverAsClass, methodName) against the dep allowlist.
         - Otherwise -> cannot determine type, skip (no false positive).
 
     Returns:
@@ -139,6 +196,8 @@ def check_against_allowlist(java_code, method):
     return_type_map = _build_return_type_map(method)
     _enrich_type_map(java_code, type_map, return_type_map)
     dep_classes = _get_dep_class_names(method)
+    inventory_classes = _build_inventory_class_names(method)
+    inventory_method_allowlist = _build_inventory_method_allowlist(method, class_inventory)
 
     violations = []
     seen = set()
@@ -170,14 +229,28 @@ def check_against_allowlist(java_code, method):
             if resolved_class is None:
                 # Type unknown — cannot verify, skip to avoid false positives
                 continue
-            # Only validate calls on dependency classes.
-            # Standard Java classes (File, OutputStream, etc.) are not in
-            # dep_classes and their methods should never be flagged.
+            if resolved_class in inventory_classes and resolved_class not in dep_classes:
+                # Inventory class: validate against public_methods if available
+                if resolved_class in inventory_method_allowlist:
+                    if called_method not in inventory_method_allowlist[resolved_class]:
+                        qualified = f"{resolved_class}.{called_method}"
+                        if qualified not in seen:
+                            seen.add(qualified)
+                            violations.append(qualified)
+                # If no public_methods data, skip (no false positive)
+                continue
             if resolved_class not in dep_classes:
                 continue
         else:
             # Uppercase receiver — treat as a static/class-level call
-            # Only check if this class appears in dependency_signatures
+            if receiver in inventory_classes and receiver not in dep_classes:
+                if receiver in inventory_method_allowlist:
+                    if called_method not in inventory_method_allowlist[receiver]:
+                        qualified = f"{receiver}.{called_method}"
+                        if qualified not in seen:
+                            seen.add(qualified)
+                            violations.append(qualified)
+                continue
             if receiver not in dep_classes:
                 continue
             resolved_class = receiver

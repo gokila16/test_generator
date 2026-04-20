@@ -15,10 +15,13 @@ def load_methods(json_path):
         if m.get('status') == 'OK'
         and m.get('body')
         and m.get('body').strip() != ''
+        and not m.get('has_developer_tests', False)
     ]
 
     skipped = len(data) - len(valid)
+    has_dev_tests = sum(1 for m in data if m.get('has_developer_tests', False))
     print(f"Valid methods to process: {len(valid)}")
-    print(f"Skipped (no body):        {skipped}")
+    print(f"Skipped (no body):        {skipped - has_dev_tests}")
+    print(f"Skipped (has dev tests):  {has_dev_tests}")
 
     return valid

@@ -2,6 +2,22 @@ import json
 import os
 
 
+def load_class_inventory(path):
+    """
+    Loads class_inventory.json, keyed by full class name.
+    Returns {} if the file is missing or unreadable.
+    """
+    if not os.path.exists(path):
+        print(f"  WARNING: class_inventory.json not found at {path} — skipping.")
+        return {}
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as exc:
+        print(f"  WARNING: failed to load class_inventory.json: {exc}")
+        return {}
+
+
 def load_context_data(dep_chains_path, call_graph_path):
     """
     Loads dependency_chains.json and call_graph.json once at startup.
