@@ -5,6 +5,6 @@ __pycache__/
 venv/
 .DS_Store
 .venv/
-/Users/apple/Documents/research/thesis_research/test_generator/config.py
+config.py
 .claude
 randomshit.py

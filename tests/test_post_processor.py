@@ -15,6 +15,7 @@ from src.java_post_processor import (
     _collapse_url_variable,
     _check_test_class_name,
     _has_test_methods,
+    _check_constructor_arities,
     post_process_java,
 )
 
@@ -267,39 +268,46 @@ class TestPostProcessJava:
 
     def test_minimal_valid_test_passes(self):
         code = _minimal_test_class()
-        result = post_process_java(
+        result, reason = post_process_java(
             code,
             expected_package="com.example",
             test_class_name="MyClass_myMethod_Test",
             sut_class_name="MyClass",
         )
         assert result is not None
+        assert reason is None
         assert "package com.example;" in result
         assert "@Test" in result
 
-    def test_none_input_returns_none(self):
-        assert post_process_java(None) is None
+    def test_none_input_returns_none_no_reason(self):
+        result, reason = post_process_java(None)
+        assert result is None
+        assert reason is None
 
-    def test_empty_string_returns_empty(self):
-        assert post_process_java("") == ""
+    def test_empty_string_returns_empty_no_reason(self):
+        result, reason = post_process_java("")
+        assert result == ""
+        assert reason is None
 
     def test_rejected_when_sut_missing(self):
         code = _minimal_test_class(sut="MyClass")
         # Claim the SUT is something that does not appear in the code
-        result = post_process_java(code, sut_class_name="NonExistentClass")
+        result, reason = post_process_java(code, sut_class_name="NonExistentClass")
         assert result is None
+        assert reason == "sut_missing"
 
     def test_class_name_mismatch_not_rejected_by_post_processor(self):
         # _check_test_class_name is intentionally NOT wired into post_process_java.
         # The LLM sometimes generates variant names (e.g. with overload suffixes) and
         # the Java compiler enforces filename==classname at compile time anyway.
         code = _minimal_test_class(class_name="MyClass_myMethod_Test")
-        result = post_process_java(
+        result, reason = post_process_java(
             code,
             test_class_name="DifferentClass_myMethod_Test",
             sut_class_name="MyClass",
         )
         assert result is not None  # should pass through; compiler catches the real mismatch
+        assert reason is None
 
     def test_rejected_when_no_test_methods(self):
         code = (
@@ -308,8 +316,9 @@ class TestPostProcessJava:
             "    void notATest() { int x = 1; }\n"
             "}\n"
         )
-        result = post_process_java(code, test_class_name="MyClass_myMethod_Test")
+        result, reason = post_process_java(code, test_class_name="MyClass_myMethod_Test")
         assert result is None
+        assert reason == "no_test_methods"
 
     def test_package_injected_when_missing(self):
         code = (
@@ -318,13 +327,14 @@ class TestPostProcessJava:
             "    @Test void t() throws Exception { MyClass obj = new MyClass(); assertEquals(1, obj.val()); }\n"
             "}\n"
         )
-        result = post_process_java(
+        result, reason = post_process_java(
             code,
             expected_package="org.example",
             test_class_name="MyClass_myMethod_Test",
             sut_class_name="MyClass",
         )
         assert result is not None
+        assert reason is None
         assert result.startswith("package org.example;")
 
     def test_throws_exception_added_to_test_method(self):
@@ -338,13 +348,139 @@ class TestPostProcessJava:
             "    }\n"
             "}\n"
         )
-        result = post_process_java(
+        result, reason = post_process_java(
             code,
             test_class_name="Foo_bar_Test",
             sut_class_name="Foo",
         )
         assert result is not None
+        assert reason is None
         assert "throws Exception" in result
+
+# ---------------------------------------------------------------------------
+# _check_constructor_arities
+# ---------------------------------------------------------------------------
+
+class TestCheckConstructorArities:
+
+    # Inventory stub: PDFTextStripper has a single no-arg constructor.
+    _INVENTORY = {
+        'org.apache.pdfbox.text.PDFTextStripper': {
+            'class_name': 'PDFTextStripper',
+            'full_name':  'org.apache.pdfbox.text.PDFTextStripper',
+            'constructors': [
+                {'params': [], 'visibility': 'public'},
+            ],
+        },
+        'com.example.MultiCtor': {
+            'class_name': 'MultiCtor',
+            'full_name':  'com.example.MultiCtor',
+            'constructors': [
+                {'params': [], 'visibility': 'public'},
+                {'params': ['String'], 'visibility': 'public'},
+                {'params': ['String', 'int'], 'visibility': 'public'},
+            ],
+        },
+    }
+
+    def test_valid_no_arg_constructor_passes(self):
+        code = "PDFTextStripper stripper = new PDFTextStripper();"
+        _, reason = _check_constructor_arities(code, self._INVENTORY)
+        assert reason is None
+
+    def test_wrong_arity_returns_constructor_arity_message(self):
+        # PDFTextStripper only has a 0-arg constructor; calling with 1 arg is wrong.
+        code = "PDFTextStripper stripper = new PDFTextStripper(writer);"
+        _, reason = _check_constructor_arities(code, self._INVENTORY)
+        assert reason is not None
+        assert reason.startswith("constructor_arity:")
+        assert "PDFTextStripper" in reason
+        assert "1" in reason
+        assert "[0]" in reason
+
+    def test_unknown_class_is_skipped(self):
+        # UnknownClass is not in the inventory — should silently pass.
+        code = "UnknownClass obj = new UnknownClass(a, b, c);"
+        _, reason = _check_constructor_arities(code, self._INVENTORY)
+        assert reason is None
+
+    def test_empty_inventory_skips_all_checks(self):
+        code = "PDFTextStripper s = new PDFTextStripper(badArg);"
+        _, reason = _check_constructor_arities(code, {})
+        assert reason is None
+
+    def test_none_inventory_skips_all_checks(self):
+        code = "PDFTextStripper s = new PDFTextStripper(badArg);"
+        _, reason = _check_constructor_arities(code, None)
+        assert reason is None
+
+    def test_multi_ctor_valid_two_arg_passes(self):
+        code = "MultiCtor mc = new MultiCtor(\"hello\", 42);"
+        _, reason = _check_constructor_arities(code, self._INVENTORY)
+        assert reason is None
+
+    def test_multi_ctor_invalid_three_arg_fails(self):
+        code = "MultiCtor mc = new MultiCtor(a, b, c);"
+        _, reason = _check_constructor_arities(code, self._INVENTORY)
+        assert reason is not None
+        assert reason.startswith("constructor_arity:")
+
+    def test_nested_parens_counted_as_one_arg(self):
+        # new PDFTextStripper(foo(a, b)) — nested commas should not be counted.
+        code = "PDFTextStripper s = new PDFTextStripper(foo(a, b));"
+        _, reason = _check_constructor_arities(code, self._INVENTORY)
+        assert reason is not None
+        assert "1" in reason  # one argument despite two commas inside
+
+    def test_post_process_java_rejects_wrong_arity(self):
+        """End-to-end: wrong-arity constructor fails post_process_java."""
+        code = (
+            "package com.example;\n"
+            "import org.junit.jupiter.api.Test;\n"
+            "import static org.junit.jupiter.api.Assertions.*;\n"
+            "public class PDFTextStripper_strip_Test {\n"
+            "    @Test\n"
+            "    void test() throws Exception {\n"
+            "        PDFTextStripper s = new PDFTextStripper(new StringWriter());\n"
+            "        assertNotNull(s);\n"
+            "    }\n"
+            "}\n"
+        )
+        result, reason = post_process_java(
+            code,
+            test_class_name="PDFTextStripper_strip_Test",
+            sut_class_name="PDFTextStripper",
+            class_inventory=self._INVENTORY,
+        )
+        assert result is None
+        assert reason is not None
+        assert reason.startswith("constructor_arity:")
+
+    def test_post_process_java_passes_correct_arity(self):
+        """End-to-end: correct no-arg constructor passes post_process_java."""
+        code = (
+            "package com.example;\n"
+            "import org.junit.jupiter.api.Test;\n"
+            "import static org.junit.jupiter.api.Assertions.*;\n"
+            "public class PDFTextStripper_strip_Test {\n"
+            "    @Test\n"
+            "    void test() throws Exception {\n"
+            "        PDFTextStripper s = new PDFTextStripper();\n"
+            "        assertNotNull(s);\n"
+            "    }\n"
+            "}\n"
+        )
+        result, reason = post_process_java(
+            code,
+            test_class_name="PDFTextStripper_strip_Test",
+            sut_class_name="PDFTextStripper",
+            class_inventory=self._INVENTORY,
+        )
+        assert result is not None
+        assert reason is None
+
+
+# ---------------------------------------------------------------------------
 
     def test_rejected_when_extra_class_defined(self):
         code = (
@@ -354,9 +490,10 @@ class TestPostProcessJava:
             "}\n"
             "class COSArray { int size() { return 0; } }\n"
         )
-        result = post_process_java(
+        result, reason = post_process_java(
             code,
             test_class_name="MyClass_myMethod_Test",
             sut_class_name="MyClass",
         )
         assert result is None
+        assert reason == "class_redefinition"

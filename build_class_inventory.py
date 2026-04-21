@@ -269,6 +269,19 @@ def pass2(inventory):
                 parent_entry['concrete_subclasses'].append(entry['class_name'])
             current = parent_entry
 
+        # Register this class as a concrete implementor of every interface it declares
+        for iface_name in entry.get('interfaces_implemented', []):
+            # Try the name as a fully-qualified key first, then fall back to simple-name resolve
+            if iface_name in inventory:
+                iface_full = iface_name
+            else:
+                iface_full = resolve(iface_name, entry['package_name'])
+            if iface_full is None or iface_full not in inventory:
+                continue
+            iface_entry = inventory[iface_full]
+            if entry['class_name'] not in iface_entry['concrete_subclasses']:
+                iface_entry['concrete_subclasses'].append(entry['class_name'])
+
 
 # ============================================================
 # MAIN

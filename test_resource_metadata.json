@@ -1,0 +1,2018 @@
+{
+  "commons-logging.properties": {
+    "extension": ".properties",
+    "file_size_bytes": 883,
+    "filename": "commons-logging.properties",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/FC60_Times.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 25815,
+    "filename": "FC60_Times.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/FC60_Times.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 22,
+    "filename": "FC60_Times.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/FC60_Times.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 23,
+    "filename": "FC60_Times.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/Liste732004001452_001_0.pdf_0_.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 8056,
+    "filename": "Liste732004001452_001_0.pdf_0_.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/Liste732004001452_001_0.pdf_0_.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 142,
+    "filename": "Liste732004001452_001_0.pdf_0_.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/Liste732004001452_001_0.pdf_0_.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 142,
+    "filename": "Liste732004001452_001_0.pdf_0_.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-2984-rotations.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 3244,
+    "filename": "PDFBOX-2984-rotations.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-2984-rotations.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 193,
+    "filename": "PDFBOX-2984-rotations.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-2984-rotations.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 193,
+    "filename": "PDFBOX-2984-rotations.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3025.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 42418,
+    "filename": "PDFBOX-3025.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3025.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 13,
+    "filename": "PDFBOX-3025.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3025.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 13,
+    "filename": "PDFBOX-3025.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3038-001033-p2.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 56750,
+    "filename": "PDFBOX-3038-001033-p2.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3038-001033-p2.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 1802,
+    "filename": "PDFBOX-3038-001033-p2.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3038-001033-p2.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 1802,
+    "filename": "PDFBOX-3038-001033-p2.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3042-003177-p2.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 394897,
+    "filename": "PDFBOX-3042-003177-p2.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3042-003177-p2.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 1912,
+    "filename": "PDFBOX-3042-003177-p2.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3042-003177-p2.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 1912,
+    "filename": "PDFBOX-3042-003177-p2.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3044-010197-p5-ligatures.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 24624,
+    "filename": "PDFBOX-3044-010197-p5-ligatures.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3044-010197-p5-ligatures.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 5151,
+    "filename": "PDFBOX-3044-010197-p5-ligatures.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3044-010197-p5-ligatures.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 5151,
+    "filename": "PDFBOX-3044-010197-p5-ligatures.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3053-reduced.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 50134,
+    "filename": "PDFBOX-3053-reduced.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3053-reduced.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 49,
+    "filename": "PDFBOX-3053-reduced.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3053-reduced.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 49,
+    "filename": "PDFBOX-3053-reduced.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3061-092465-reduced.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 23266,
+    "filename": "PDFBOX-3061-092465-reduced.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3061-092465-reduced.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 35,
+    "filename": "PDFBOX-3061-092465-reduced.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3061-092465-reduced.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 35,
+    "filename": "PDFBOX-3061-092465-reduced.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3062-002207-p1.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 52066,
+    "filename": "PDFBOX-3062-002207-p1.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3062-002207-p1.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 1369,
+    "filename": "PDFBOX-3062-002207-p1.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3062-002207-p1.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 1369,
+    "filename": "PDFBOX-3062-002207-p1.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3062-005717-p1.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 11976,
+    "filename": "PDFBOX-3062-005717-p1.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3062-005717-p1.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 109,
+    "filename": "PDFBOX-3062-005717-p1.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3062-005717-p1.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 110,
+    "filename": "PDFBOX-3062-005717-p1.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3062-N2MOQ7YZICIYGTPLQJAWJ4HLN6CCEMHZ-reduced.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 111124,
+    "filename": "PDFBOX-3062-N2MOQ7YZICIYGTPLQJAWJ4HLN6CCEMHZ-reduced.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3062-N2MOQ7YZICIYGTPLQJAWJ4HLN6CCEMHZ-reduced.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 100,
+    "filename": "PDFBOX-3062-N2MOQ7YZICIYGTPLQJAWJ4HLN6CCEMHZ-reduced.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3062-N2MOQ7YZICIYGTPLQJAWJ4HLN6CCEMHZ-reduced.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 100,
+    "filename": "PDFBOX-3062-N2MOQ7YZICIYGTPLQJAWJ4HLN6CCEMHZ-reduced.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3067-negativeTf.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 2459,
+    "filename": "PDFBOX-3067-negativeTf.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3067-negativeTf.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 11,
+    "filename": "PDFBOX-3067-negativeTf.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3067-negativeTf.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 11,
+    "filename": "PDFBOX-3067-negativeTf.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3110-poems-beads-cropbox.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 44500,
+    "filename": "PDFBOX-3110-poems-beads-cropbox.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3110-poems-beads-cropbox.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 5576,
+    "filename": "PDFBOX-3110-poems-beads-cropbox.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3110-poems-beads-cropbox.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 5576,
+    "filename": "PDFBOX-3110-poems-beads-cropbox.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3110-poems-beads.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 45598,
+    "filename": "PDFBOX-3110-poems-beads.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3110-poems-beads.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 5576,
+    "filename": "PDFBOX-3110-poems-beads.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3110-poems-beads.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 5576,
+    "filename": "PDFBOX-3110-poems-beads.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3123-ADSFWTRB3HBZBZKEVESVTBRZC2MNKZF5_reduced.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 13363,
+    "filename": "PDFBOX-3123-ADSFWTRB3HBZBZKEVESVTBRZC2MNKZF5_reduced.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3123-ADSFWTRB3HBZBZKEVESVTBRZC2MNKZF5_reduced.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 45,
+    "filename": "PDFBOX-3123-ADSFWTRB3HBZBZKEVESVTBRZC2MNKZF5_reduced.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3123-ADSFWTRB3HBZBZKEVESVTBRZC2MNKZF5_reduced.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 45,
+    "filename": "PDFBOX-3123-ADSFWTRB3HBZBZKEVESVTBRZC2MNKZF5_reduced.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3127-RAU4G6QMOVRYBISJU7R6MOVZCRFUO7P4-VFont.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 80944,
+    "filename": "PDFBOX-3127-RAU4G6QMOVRYBISJU7R6MOVZCRFUO7P4-VFont.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3127-RAU4G6QMOVRYBISJU7R6MOVZCRFUO7P4-VFont.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 756,
+    "filename": "PDFBOX-3127-RAU4G6QMOVRYBISJU7R6MOVZCRFUO7P4-VFont.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3127-RAU4G6QMOVRYBISJU7R6MOVZCRFUO7P4-VFont.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 754,
+    "filename": "PDFBOX-3127-RAU4G6QMOVRYBISJU7R6MOVZCRFUO7P4-VFont.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3195.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 1463,
+    "filename": "PDFBOX-3195.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3195.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 10,
+    "filename": "PDFBOX-3195.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3195.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 10,
+    "filename": "PDFBOX-3195.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3498-Y5TLCWTIAE3FYDVJTV2TXRZGXLEDUNSW.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 44136,
+    "filename": "PDFBOX-3498-Y5TLCWTIAE3FYDVJTV2TXRZGXLEDUNSW.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3498-Y5TLCWTIAE3FYDVJTV2TXRZGXLEDUNSW.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 65,
+    "filename": "PDFBOX-3498-Y5TLCWTIAE3FYDVJTV2TXRZGXLEDUNSW.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3498-Y5TLCWTIAE3FYDVJTV2TXRZGXLEDUNSW.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 65,
+    "filename": "PDFBOX-3498-Y5TLCWTIAE3FYDVJTV2TXRZGXLEDUNSW.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3833-reduced.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 101823,
+    "filename": "PDFBOX-3833-reduced.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3833-reduced.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 14,
+    "filename": "PDFBOX-3833-reduced.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-3833-reduced.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 14,
+    "filename": "PDFBOX-3833-reduced.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-4322-Empty-ToUnicode-reduced.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 21387,
+    "filename": "PDFBOX-4322-Empty-ToUnicode-reduced.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-4322-Empty-ToUnicode-reduced.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 11,
+    "filename": "PDFBOX-4322-Empty-ToUnicode-reduced.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-4322-Empty-ToUnicode-reduced.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 11,
+    "filename": "PDFBOX-4322-Empty-ToUnicode-reduced.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-4531-bidi-ligature-1.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 5622,
+    "filename": "PDFBOX-4531-bidi-ligature-1.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-4531-bidi-ligature-1.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 23,
+    "filename": "PDFBOX-4531-bidi-ligature-1.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-4531-bidi-ligature-1.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 23,
+    "filename": "PDFBOX-4531-bidi-ligature-1.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-4531-bidi-ligature-2.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 40256,
+    "filename": "PDFBOX-4531-bidi-ligature-2.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-4531-bidi-ligature-2.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 23,
+    "filename": "PDFBOX-4531-bidi-ligature-2.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-4531-bidi-ligature-2.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 23,
+    "filename": "PDFBOX-4531-bidi-ligature-2.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-4532-reduced.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 86730,
+    "filename": "PDFBOX-4532-reduced.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-4532-reduced.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 8,
+    "filename": "PDFBOX-4532-reduced.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-4532-reduced.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 8,
+    "filename": "PDFBOX-4532-reduced.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-5002.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 941,
+    "filename": "PDFBOX-5002.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-5002.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 74,
+    "filename": "PDFBOX-5002.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-5002.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 74,
+    "filename": "PDFBOX-5002.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-5350-JX57O5E5YG6XM4FZABPULQGTW4OXPCWA-p1-reduced.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 48143,
+    "filename": "PDFBOX-5350-JX57O5E5YG6XM4FZABPULQGTW4OXPCWA-p1-reduced.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-5350-JX57O5E5YG6XM4FZABPULQGTW4OXPCWA-p1-reduced.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 23,
+    "filename": "PDFBOX-5350-JX57O5E5YG6XM4FZABPULQGTW4OXPCWA-p1-reduced.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-5350-JX57O5E5YG6XM4FZABPULQGTW4OXPCWA-p1-reduced.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 23,
+    "filename": "PDFBOX-5350-JX57O5E5YG6XM4FZABPULQGTW4OXPCWA-p1-reduced.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-5747-unicode-surrogate-with-diacritic-reduced.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 2019,
+    "filename": "PDFBOX-5747-unicode-surrogate-with-diacritic-reduced.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-5747-unicode-surrogate-with-diacritic-reduced.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 11,
+    "filename": "PDFBOX-5747-unicode-surrogate-with-diacritic-reduced.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-5747-unicode-surrogate-with-diacritic-reduced.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 11,
+    "filename": "PDFBOX-5747-unicode-surrogate-with-diacritic-reduced.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-5920-4MQTG6ZXOYSMTQ444KGQOVC6ZFQHWFNY-spaces-reduced.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 5821,
+    "filename": "PDFBOX-5920-4MQTG6ZXOYSMTQ444KGQOVC6ZFQHWFNY-spaces-reduced.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-5920-4MQTG6ZXOYSMTQ444KGQOVC6ZFQHWFNY-spaces-reduced.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 45,
+    "filename": "PDFBOX-5920-4MQTG6ZXOYSMTQ444KGQOVC6ZFQHWFNY-spaces-reduced.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-5920-4MQTG6ZXOYSMTQ444KGQOVC6ZFQHWFNY-spaces-reduced.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 45,
+    "filename": "PDFBOX-5920-4MQTG6ZXOYSMTQ444KGQOVC6ZFQHWFNY-spaces-reduced.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-5920-Y5U2XZCKG2U6TO3FC36NCGOZECHQA2PY-p39-reduced.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 12597,
+    "filename": "PDFBOX-5920-Y5U2XZCKG2U6TO3FC36NCGOZECHQA2PY-p39-reduced.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-5920-Y5U2XZCKG2U6TO3FC36NCGOZECHQA2PY-p39-reduced.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 25,
+    "filename": "PDFBOX-5920-Y5U2XZCKG2U6TO3FC36NCGOZECHQA2PY-p39-reduced.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/PDFBOX-5920-Y5U2XZCKG2U6TO3FC36NCGOZECHQA2PY-p39-reduced.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 25,
+    "filename": "PDFBOX-5920-Y5U2XZCKG2U6TO3FC36NCGOZECHQA2PY-p39-reduced.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/compression/acroform.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 64609,
+    "filename": "acroform.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/compression/attachment.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 79414,
+    "filename": "attachment.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/compression/unencrypted.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 71020,
+    "filename": "unencrypted.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/cweb.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 272008,
+    "filename": "cweb.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/cweb.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 99781,
+    "filename": "cweb.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/cweb.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 99781,
+    "filename": "cweb.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/data-000001.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 3072,
+    "filename": "data-000001.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/data-000001.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 114,
+    "filename": "data-000001.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/data-000001.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 114,
+    "filename": "data-000001.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/eu-001.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 68143,
+    "filename": "eu-001.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/eu-001.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 4693,
+    "filename": "eu-001.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/eu-001.pdf-tabula.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 4785,
+    "filename": "eu-001.pdf-tabula.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/eu-001.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 4765,
+    "filename": "eu-001.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/hello3.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 30269,
+    "filename": "hello3.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/hello3.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 27,
+    "filename": "hello3.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/hello3.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 27,
+    "filename": "hello3.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/merge/PDFA3A.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 49917,
+    "filename": "PDFA3A.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/merge/PDFBOX-4417-001031.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 53333,
+    "filename": "PDFBOX-4417-001031.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/merge/PDFBOX-4417-054080.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 48925,
+    "filename": "PDFBOX-4417-054080.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/merge/PDFBOX-5762-722238.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 35644,
+    "filename": "PDFBOX-5762-722238.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/merge/PDFBOX-5792-240045.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 44295,
+    "filename": "PDFBOX-5792-240045.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/merge/PDFBOX-5809-509329.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 43516,
+    "filename": "PDFBOX-5809-509329.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/merge/PDFBOX-5811-362972.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 44338,
+    "filename": "PDFBOX-5811-362972.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/merge/PDFBOX-5840-410609.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 33084,
+    "filename": "PDFBOX-5840-410609.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/merge/PDFBox.GlobalResourceMergeTest.Doc01.decoded.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 14336,
+    "filename": "PDFBox.GlobalResourceMergeTest.Doc01.decoded.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/merge/PDFBox.GlobalResourceMergeTest.Doc01.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 9511,
+    "filename": "PDFBox.GlobalResourceMergeTest.Doc01.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/merge/PDFBox.GlobalResourceMergeTest.Doc02.decoded.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 14336,
+    "filename": "PDFBox.GlobalResourceMergeTest.Doc02.decoded.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/merge/PDFBox.GlobalResourceMergeTest.Doc02.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 9511,
+    "filename": "PDFBox.GlobalResourceMergeTest.Doc02.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/merge/jpegrgb.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 41204,
+    "filename": "jpegrgb.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/merge/multitiff.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 2928,
+    "filename": "multitiff.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/openoffice-test-document.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 12418,
+    "filename": "openoffice-test-document.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/openoffice-test-document.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 9,
+    "filename": "openoffice-test-document.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/openoffice-test-document.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 9,
+    "filename": "openoffice-test-document.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/26101_Colors.ai": {
+    "extension": ".ai",
+    "file_size_bytes": 77372,
+    "filename": "26101_Colors.ai",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/26101_Colors.ai-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 9278,
+    "filename": "26101_Colors.ai-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/4PP-Highlighting.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 2497,
+    "filename": "4PP-Highlighting.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/4PP-Highlighting.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 9288,
+    "filename": "4PP-Highlighting.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/ARCHIVERGB.ai": {
+    "extension": ".ai",
+    "file_size_bytes": 1121754,
+    "filename": "ARCHIVERGB.ai",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/ARCHIVERGB.ai-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 106897,
+    "filename": "ARCHIVERGB.ai-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/FANTASTICCMYK.ai": {
+    "extension": ".ai",
+    "file_size_bytes": 182545,
+    "filename": "FANTASTICCMYK.ai",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/FANTASTICCMYK.ai-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 31572,
+    "filename": "FANTASTICCMYK.ai-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/HOTRODCMYK.ai": {
+    "extension": ".ai",
+    "file_size_bytes": 771013,
+    "filename": "HOTRODCMYK.ai",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/HOTRODCMYK.ai-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 23787,
+    "filename": "HOTRODCMYK.ai-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/PDFBOX-4372-2DAYCLVOFG3FTVO4RMAJJL3VTPNYDFRO-p4_reduced.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 912,
+    "filename": "PDFBOX-4372-2DAYCLVOFG3FTVO4RMAJJL3VTPNYDFRO-p4_reduced.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/PDFBOX-4372-2DAYCLVOFG3FTVO4RMAJJL3VTPNYDFRO-p4_reduced.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 3012,
+    "filename": "PDFBOX-4372-2DAYCLVOFG3FTVO4RMAJJL3VTPNYDFRO-p4_reduced.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/source.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 231741,
+    "filename": "source.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/source.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 44686,
+    "filename": "source.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/survey.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 127295,
+    "filename": "survey.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/survey.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 48879,
+    "filename": "survey.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/survey.pdf-2.png": {
+    "extension": ".png",
+    "file_size_bytes": 26995,
+    "filename": "survey.pdf-2.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/survey.pdf-3.png": {
+    "extension": ".png",
+    "file_size_bytes": 21137,
+    "filename": "survey.pdf-3.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/survey.pdf-4.png": {
+    "extension": ".png",
+    "file_size_bytes": 22089,
+    "filename": "survey.pdf-4.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/survey.pdf-5.png": {
+    "extension": ".png",
+    "file_size_bytes": 30345,
+    "filename": "survey.pdf-5.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/survey.pdf-6.png": {
+    "extension": ".png",
+    "file_size_bytes": 26245,
+    "filename": "survey.pdf-6.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/survey.pdf-7.png": {
+    "extension": ".png",
+    "file_size_bytes": 27771,
+    "filename": "survey.pdf-7.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/survey.pdf-8.png": {
+    "extension": ".png",
+    "file_size_bytes": 20752,
+    "filename": "survey.pdf-8.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/survey.pdf-9.png": {
+    "extension": ".png",
+    "file_size_bytes": 14693,
+    "filename": "survey.pdf-9.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/test-landscape2.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 10381,
+    "filename": "test-landscape2.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/test-landscape2.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 5038,
+    "filename": "test-landscape2.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/tiger-as-form-xobject.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 50798,
+    "filename": "tiger-as-form-xobject.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rendering/tiger-as-form-xobject.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 35053,
+    "filename": "tiger-as-form-xobject.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rotation.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 6605,
+    "filename": "rotation.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rotation.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 176,
+    "filename": "rotation.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/rotation.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 176,
+    "filename": "rotation.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/sampleForSpec.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 9364,
+    "filename": "sampleForSpec.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/sampleForSpec.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 77,
+    "filename": "sampleForSpec.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/sampleForSpec.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 77,
+    "filename": "sampleForSpec.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/sample_fonts_solidconvertor.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 57107,
+    "filename": "sample_fonts_solidconvertor.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/sample_fonts_solidconvertor.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 620,
+    "filename": "sample_fonts_solidconvertor.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/sample_fonts_solidconvertor.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 620,
+    "filename": "sample_fonts_solidconvertor.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/simple-openoffice.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 15023,
+    "filename": "simple-openoffice.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/simple-openoffice.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 23,
+    "filename": "simple-openoffice.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/simple-openoffice.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 23,
+    "filename": "simple-openoffice.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/yaddatest.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 4631,
+    "filename": "yaddatest.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/yaddatest.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 42,
+    "filename": "yaddatest.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "input/yaddatest.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 42,
+    "filename": "yaddatest.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "junit-platform.properties": {
+    "extension": ".properties",
+    "file_size_bytes": 978,
+    "filename": "junit-platform.properties",
+    "is_encrypted": false,
+    "password": null
+  },
+  "log4j2.xml": {
+    "extension": ".xml",
+    "file_size_bytes": 1802,
+    "filename": "log4j2.xml",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/cos/simple.png": {
+    "extension": ".png",
+    "file_size_bytes": 426,
+    "filename": "simple.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/encryption/AES128ExposedMeta.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 18885,
+    "filename": "AES128ExposedMeta.pdf",
+    "is_encrypted": true,
+    "password": null
+  },
+  "org/apache/pdfbox/encryption/AES256ExposedMeta.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 26953,
+    "filename": "AES256ExposedMeta.pdf",
+    "is_encrypted": true,
+    "password": null
+  },
+  "org/apache/pdfbox/encryption/AESkeylength128.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 11591,
+    "filename": "AESkeylength128.pdf",
+    "is_encrypted": true,
+    "password": null
+  },
+  "org/apache/pdfbox/encryption/AESkeylength256.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 11180,
+    "filename": "AESkeylength256.pdf",
+    "is_encrypted": true,
+    "password": null
+  },
+  "org/apache/pdfbox/encryption/Acroform-PDFBOX-2333.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 982290,
+    "filename": "Acroform-PDFBOX-2333.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/encryption/PDFBOX-4421-keystore.pfx": {
+    "extension": ".pfx",
+    "file_size_bytes": 2383,
+    "filename": "PDFBOX-4421-keystore.pfx",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/encryption/PDFBOX-5249.p12": {
+    "extension": ".p12",
+    "file_size_bytes": 2355,
+    "filename": "PDFBOX-5249.p12",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/encryption/PasswordSample-128bit.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 8377,
+    "filename": "PasswordSample-128bit.pdf",
+    "is_encrypted": true,
+    "password": "owner"
+  },
+  "org/apache/pdfbox/encryption/PasswordSample-256bit.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 7664,
+    "filename": "PasswordSample-256bit.pdf",
+    "is_encrypted": true,
+    "password": "owner"
+  },
+  "org/apache/pdfbox/encryption/PasswordSample-40bit.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 8374,
+    "filename": "PasswordSample-40bit.pdf",
+    "is_encrypted": true,
+    "password": "owner"
+  },
+  "org/apache/pdfbox/encryption/preEnc_20141025_105451.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 41305,
+    "filename": "preEnc_20141025_105451.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/encryption/test.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 12418,
+    "filename": "test.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/encryption/test1.der": {
+    "extension": ".der",
+    "file_size_bytes": 945,
+    "filename": "test1.der",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/encryption/test1.pfx": {
+    "extension": ".pfx",
+    "file_size_bytes": 1965,
+    "filename": "test1.pfx",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/encryption/test2.der": {
+    "extension": ".der",
+    "file_size_bytes": 945,
+    "filename": "test2.der",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/encryption/test2.pfx": {
+    "extension": ".pfx",
+    "file_size_bytes": 1965,
+    "filename": "test2.pfx",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/filter/PDFBOX-1977.bin": {
+    "extension": ".bin",
+    "file_size_bytes": 19321,
+    "filename": "PDFBOX-1977.bin",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/AcroFormForMerge-DifferentExportValues.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 18590,
+    "filename": "AcroFormForMerge-DifferentExportValues.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/AcroFormForMerge-DifferentFieldType.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 18222,
+    "filename": "AcroFormForMerge-DifferentFieldType.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/AcroFormForMerge-DifferentOptions.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 18580,
+    "filename": "AcroFormForMerge-DifferentOptions.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/AcroFormForMerge-SameNameNode.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 12559,
+    "filename": "AcroFormForMerge-SameNameNode.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/AcroFormForMerge-TextFieldsOnly.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 5705,
+    "filename": "AcroFormForMerge-TextFieldsOnly.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/AcroFormForMerge.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 18543,
+    "filename": "AcroFormForMerge.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/AcrobatMerge-DifferentExportValues-WasMaster.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 36294,
+    "filename": "AcrobatMerge-DifferentExportValues-WasMaster.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/AcrobatMerge-DifferentExportValues.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 36266,
+    "filename": "AcrobatMerge-DifferentExportValues.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/AcrobatMerge-DifferentFieldType-WasMaster.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 35564,
+    "filename": "AcrobatMerge-DifferentFieldType-WasMaster.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/AcrobatMerge-DifferentFieldType.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 35897,
+    "filename": "AcrobatMerge-DifferentFieldType.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/AcrobatMerge-DifferentOptions-WasMaster.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 36252,
+    "filename": "AcrobatMerge-DifferentOptions-WasMaster.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/AcrobatMerge-DifferentOptions.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 36255,
+    "filename": "AcrobatMerge-DifferentOptions.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/AcrobatMerge-SameMerged.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 36175,
+    "filename": "AcrobatMerge-SameMerged.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/AcrobatMerge-SameNameNode.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 30122,
+    "filename": "AcrobatMerge-SameNameNode.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/AcrobatMerge-TextFieldsOnly-SameMerged.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 8569,
+    "filename": "AcrobatMerge-TextFieldsOnly-SameMerged.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/OverlayTestBaseRot0.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 936,
+    "filename": "OverlayTestBaseRot0.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/Overlayed-with-rot0.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 1650,
+    "filename": "Overlayed-with-rot0.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/Overlayed-with-rot180.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 1660,
+    "filename": "Overlayed-with-rot180.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/Overlayed-with-rot270.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 1664,
+    "filename": "Overlayed-with-rot270.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/Overlayed-with-rot90.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 1657,
+    "filename": "Overlayed-with-rot90.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/PDFBoxLegacyMerge-SameMerged.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 46334,
+    "filename": "PDFBoxLegacyMerge-SameMerged.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/rot0.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 888,
+    "filename": "rot0.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/rot180.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 896,
+    "filename": "rot180.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/rot270.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 898,
+    "filename": "rot270.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/multipdf/rot90.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 892,
+    "filename": "rot90.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdfparser/MissingCatalog.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 433,
+    "filename": "MissingCatalog.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdfparser/SimpleForm2Fields.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 1123,
+    "filename": "SimpleForm2Fields.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdfparser/embedded_zip.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 19068,
+    "filename": "embedded_zip.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdfparser/nocatalog.fdf": {
+    "extension": ".fdf",
+    "file_size_bytes": 136,
+    "filename": "nocatalog.fdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdfparser/withcatalog.fdf": {
+    "extension": ".fdf",
+    "file_size_bytes": 149,
+    "filename": "withcatalog.fdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/PDFBOX-3068.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 849,
+    "filename": "PDFBOX-3068.pdf",
+    "is_encrypted": true,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/badpagelabels.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 994,
+    "filename": "badpagelabels.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/common/null_PDComplexFileSpecification.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 19088,
+    "filename": "null_PDComplexFileSpecification.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/common/testPDF_multiFormatEmbFiles.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 2662,
+    "filename": "testPDF_multiFormatEmbFiles.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/documentinterchange/logicalstructure/PDFBOX-2725-878725.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 21917,
+    "filename": "PDFBOX-2725-878725.pdf",
+    "is_encrypted": true,
+    "password": ""
+  },
+  "org/apache/pdfbox/pdmodel/fdf/xfdf-test-document-annotations.xml": {
+    "extension": ".xml",
+    "file_size_bytes": 8406,
+    "filename": "xfdf-test-document-annotations.xml",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/font/F001u_3_7j.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 44088,
+    "filename": "F001u_3_7j.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/929316.png": {
+    "extension": ".png",
+    "file_size_bytes": 45746,
+    "filename": "929316.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/ccittg3-garbage-padded-fields-bigendian.tif": {
+    "extension": ".tif",
+    "file_size_bytes": 6554,
+    "filename": "ccittg3-garbage-padded-fields-bigendian.tif",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/ccittg3-garbage-padded-fields.tif": {
+    "extension": ".tif",
+    "file_size_bytes": 6554,
+    "filename": "ccittg3-garbage-padded-fields.tif",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/ccittg3.tif": {
+    "extension": ".tif",
+    "file_size_bytes": 6554,
+    "filename": "ccittg3.tif",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/ccittg4.tif": {
+    "extension": ".tif",
+    "file_size_bytes": 4040,
+    "filename": "ccittg4.tif",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/ccittg4multi.tif": {
+    "extension": ".tif",
+    "file_size_bytes": 1370,
+    "filename": "ccittg4multi.tif",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/gif-1bit-transparent.gif": {
+    "extension": ".gif",
+    "file_size_bytes": 413,
+    "filename": "gif-1bit-transparent.gif",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/gif.gif": {
+    "extension": ".gif",
+    "file_size_bytes": 12491,
+    "filename": "gif.gif",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/jpeg.jpg": {
+    "extension": ".jpg",
+    "file_size_bytes": 57489,
+    "filename": "jpeg.jpg",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/jpeg256.jpg": {
+    "extension": ".jpg",
+    "file_size_bytes": 49928,
+    "filename": "jpeg256.jpg",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/jpegcmyk.jpg": {
+    "extension": ".jpg",
+    "file_size_bytes": 102636,
+    "filename": "jpegcmyk.jpg",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/lzw.tif": {
+    "extension": ".tif",
+    "file_size_bytes": 6398,
+    "filename": "lzw.tif",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/png.png": {
+    "extension": ".png",
+    "file_size_bytes": 14942,
+    "filename": "png.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/png_alpha_gray.png": {
+    "extension": ".png",
+    "file_size_bytes": 17834,
+    "filename": "png_alpha_gray.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/png_alpha_rgb.png": {
+    "extension": ".png",
+    "file_size_bytes": 18789,
+    "filename": "png_alpha_rgb.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/png_gray.png": {
+    "extension": ".png",
+    "file_size_bytes": 14347,
+    "filename": "png_gray.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/png_gray_with_gama.png": {
+    "extension": ".png",
+    "file_size_bytes": 3672,
+    "filename": "png_gray_with_gama.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/png_indexed.png": {
+    "extension": ".png",
+    "file_size_bytes": 8736,
+    "filename": "png_indexed.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/png_indexed_1bit_alpha.png": {
+    "extension": ".png",
+    "file_size_bytes": 172,
+    "filename": "png_indexed_1bit_alpha.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/png_indexed_2bit_alpha.png": {
+    "extension": ".png",
+    "file_size_bytes": 190,
+    "filename": "png_indexed_2bit_alpha.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/png_indexed_4bit_alpha.png": {
+    "extension": ".png",
+    "file_size_bytes": 43317,
+    "filename": "png_indexed_4bit_alpha.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/png_indexed_8bit_alpha.png": {
+    "extension": ".png",
+    "file_size_bytes": 396,
+    "filename": "png_indexed_8bit_alpha.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/png_rgb_gamma.png": {
+    "extension": ".png",
+    "file_size_bytes": 15517,
+    "filename": "png_rgb_gamma.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/graphics/image/png_rgb_romm_16bit.png": {
+    "extension": ".png",
+    "file_size_bytes": 24723,
+    "filename": "png_rgb_romm_16bit.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/annotation/AnnotationTypes.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 17547,
+    "filename": "AnnotationTypes.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/annotation/AnnotationTypes.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 10275,
+    "filename": "AnnotationTypes.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/annotation/PDFBOX-5797-SO79271803.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 2067,
+    "filename": "PDFBOX-5797-SO79271803.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/annotation/PDSquareAnnotationTest.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 952,
+    "filename": "PDSquareAnnotationTest.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/AcroFormsBasicFields.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 170599,
+    "filename": "AcroFormsBasicFields.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/AcroFormsRotation.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 42637,
+    "filename": "AcroFormsRotation.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/AcroFormsRotation.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 80737,
+    "filename": "AcroFormsRotation.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/AcroFormsRotation.pdf-2.png": {
+    "extension": ".png",
+    "file_size_bytes": 83051,
+    "filename": "AcroFormsRotation.pdf-2.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/AlignmentTests-flattened-noRef.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 64491,
+    "filename": "AlignmentTests-flattened-noRef.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/AlignmentTests-flattened.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 64491,
+    "filename": "AlignmentTests-flattened.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/AlignmentTests.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 959227,
+    "filename": "AlignmentTests.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/AlignmentTests.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 89118,
+    "filename": "AlignmentTests.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/CombTest.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 7498,
+    "filename": "CombTest.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/ControlCharacters.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 43916,
+    "filename": "ControlCharacters.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/DifferentDALevels.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 9021,
+    "filename": "DifferentDALevels.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/MultilineFields.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 978227,
+    "filename": "MultilineFields.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/MultilineFields.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 109739,
+    "filename": "MultilineFields.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/PDFBOX-3835-input-acrobat-wrap.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 9924,
+    "filename": "PDFBOX-3835-input-acrobat-wrap.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/PDFBOX-4958.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 78784,
+    "filename": "PDFBOX-4958.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/PDFBOX-5784.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 1040968,
+    "filename": "PDFBOX-5784.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/PDFBOX-5784.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 26677,
+    "filename": "PDFBOX-5784.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/PDFBOX3812-acrobat-multiline-auto.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 29737,
+    "filename": "PDFBOX3812-acrobat-multiline-auto.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/form/combtest.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 9417,
+    "filename": "combtest.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/interactive/pagenavigation/transitions_test.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 1795,
+    "filename": "transitions_test.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/page_tree_multiple_levels.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 2346,
+    "filename": "page_tree_multiple_levels.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/sRGB.icc": {
+    "extension": ".icc",
+    "file_size_bytes": 6922,
+    "filename": "sRGB.icc",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/sRGB.icc.COPYING": {
+    "extension": ".copying",
+    "file_size_bytes": 1905,
+    "filename": "sRGB.icc.COPYING",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/sRGB.icc.LICENSE-ZLIB": {
+    "extension": ".license-zlib",
+    "file_size_bytes": 926,
+    "filename": "sRGB.icc.LICENSE-ZLIB",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/sRGB.icc.README": {
+    "extension": ".readme",
+    "file_size_bytes": 471,
+    "filename": "sRGB.icc.README",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/test.unc.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 110437,
+    "filename": "test.unc.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/test_pagelabels.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 289703,
+    "filename": "test_pagelabels.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/pdmodel/with_outline.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 20066,
+    "filename": "with_outline.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/resources/icc/ISOcoated_v2_300_bas.icc": {
+    "extension": ".icc",
+    "file_size_bytes": 1053552,
+    "filename": "ISOcoated_v2_300_bas.icc",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/text/BidiSample.pdf": {
+    "extension": ".pdf",
+    "file_size_bytes": 21130,
+    "filename": "BidiSample.pdf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/text/BidiSample.pdf-sorted.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 252,
+    "filename": "BidiSample.pdf-sorted.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/text/BidiSample.pdf.txt": {
+    "extension": ".txt",
+    "file_size_bytes": 252,
+    "filename": "BidiSample.pdf.txt",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/ttf/Bengali.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 20840,
+    "filename": "Bengali.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/ttf/Devanagari.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 37600,
+    "filename": "Devanagari.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/ttf/Gujarati.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 29279,
+    "filename": "Gujarati.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/ttf/Lohit-Bengali.ttf": {
+    "extension": ".ttf",
+    "file_size_bytes": 131548,
+    "filename": "Lohit-Bengali.ttf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/ttf/Lohit-Devanagari.ttf": {
+    "extension": ".ttf",
+    "file_size_bytes": 154932,
+    "filename": "Lohit-Devanagari.ttf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/ttf/Lohit-Gujarati.ttf": {
+    "extension": ".ttf",
+    "file_size_bytes": 61732,
+    "filename": "Lohit-Gujarati.ttf",
+    "is_encrypted": false,
+    "password": null
+  },
+  "org/apache/pdfbox/ttf/PDFBOX-5812.pdf-1.png": {
+    "extension": ".png",
+    "file_size_bytes": 8185,
+    "filename": "PDFBOX-5812.pdf-1.png",
+    "is_encrypted": false,
+    "password": null
+  }
+}

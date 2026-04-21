@@ -4,10 +4,14 @@ def extract_java_code(response):
     """
     Extracts Java code from LLM response.
     Tries multiple patterns in order.
-    Returns clean Java code string or None.
+    Returns (code, None) on success, (None, "no_code_block") when no code
+    block can be found.
     """
     if not response:
-        return None
+        return None, "no_code_block"
+
+    if "@Test" not in response:
+        return None, "no_test_annotation"
 
     # Pattern 1: ```java ... ```
     match = re.search(
@@ -16,7 +20,7 @@ def extract_java_code(response):
         re.DOTALL
     )
     if match:
-        return match.group(1).strip()
+        return match.group(1).strip(), None
 
     # Pattern 2: ``` ... ```
     match = re.search(
@@ -25,7 +29,7 @@ def extract_java_code(response):
         re.DOTALL
     )
     if match:
-        return match.group(1).strip()
+        return match.group(1).strip(), None
 
     # Pattern 3: starts with package, import, or public class
     match = re.search(
@@ -33,6 +37,6 @@ def extract_java_code(response):
         response
     )
     if match:
-        return response[match.start():].strip()
+        return response[match.start():].strip(), None
 
-    return None
+    return None, "no_code_block"

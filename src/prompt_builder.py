@@ -1,5 +1,6 @@
 import re
 import config
+from src.behavioral_analyzer import extract_behavioral_constraints
 from src.resource_scanner import is_file_dependent, scan_test_resources
 
 
@@ -29,11 +30,35 @@ def _format_dependency_signatures(method):
     return "\n".join(lines)
 
 
+def _annotate_resource_entry(entry):
+    """
+    Returns the display string for a single resource entry dict.
+
+    - Plain file (no encryption metadata, or not encrypted):
+        "filename.pdf"
+    - Encrypted with known password:
+        "filename.pdf (encrypted, password: "userpassword")"
+    - Encrypted with unknown password:
+        "filename.pdf (encrypted, password unknown — do not use for happy-path tests)"
+    """
+    rel_path = entry['rel_path']
+    is_encrypted = entry.get('is_encrypted', False)
+    if not is_encrypted:
+        return rel_path
+    password = entry.get('password')
+    if password is not None:
+        return f'{rel_path} (encrypted, password: "{password}")'
+    return f"{rel_path} (encrypted, password unknown — do not use for happy-path tests)"
+
+
 def _format_resource_block(method):
     """
     If the method is file-dependent, scans TEST_RESOURCES_DIR and returns a
     prompt section listing available real test resource files.
     Returns an empty string if the method does not take file parameters.
+
+    Encrypted files are annotated so the LLM knows which password to supply
+    (or to skip the file for happy-path tests if the password is unknown).
     """
     if not is_file_dependent(method):
         return ""
@@ -47,8 +72,12 @@ def _format_resource_block(method):
         "",
     ]
     for ext in sorted(resources):
-        filenames = ", ".join(sorted(resources[ext]))
-        lines.append(f"{ext} files: {filenames}")
+        entries = resources[ext]
+        annotated = ", ".join(
+            _annotate_resource_entry(e)
+            for e in sorted(entries, key=lambda e: e['rel_path'])
+        )
+        lines.append(f"{ext} files: {annotated}")
     lines += [
         "",
         "Access them in tests using:",
@@ -325,6 +354,26 @@ Implementation:
     if caller_section:
         prompt += caller_section + "\n\n"
 
+    behavioral = extract_behavioral_constraints(method.get('body', ''))
+    behavioral_lines = []
+    for t in behavioral.get('throws', []):
+        if t['condition'] is not None:
+            behavioral_lines.append(
+                f"- This method throws {t['exception']} only when "
+                f"({t['condition']}). "
+                f"Do not assert assertThrows({t['exception']}.class) for any other input."
+            )
+    for r in behavioral.get('returns', []):
+        behavioral_lines.append(
+            f"- On the branch where `{r['context']}`, this method returns "
+            f"{r['value']}. Use this exact value in your assertEquals assertion."
+        )
+    if behavioral_lines:
+        prompt += "## BEHAVIORAL CONSTRAINTS\n"
+        prompt += "The following behaviors are directly readable from the implementation.\n"
+        prompt += "Use them as precise contracts — do not guess or infer different values.\n\n"
+        prompt += "\n".join(behavioral_lines) + "\n\n"
+
     prompt += f"""=== BRANCH ANALYSIS (complete this before planning tests) ===
 Before listing test methods, you MUST enumerate every branch in the implementation above.
 A branch is any point where execution can take two or more different paths:
@@ -363,8 +412,10 @@ Every test method MUST state which branch(es) it covers in a "Covers branches:" 
 10. Never plan chained method calls. Every method return value must be assigned to a named variable before calling methods on it.
 11. Every branch listed in BRANCH ANALYSIS must be covered by at least one test method. Do not omit any branch.
 12. Plan meaningful assertions: use assertEquals/assertSame to check exact return values, assertThrows to check exceptions, assertTrue/assertFalse only for boolean results. assertNotNull alone is not a meaningful assertion — always additionally verify the content or state of the returned object.
-13. Never plan assertThrows(IOException.class, () -> method(null)). Passing null to a method that dereferences it throws NullPointerException, not a checked exception.
-
+"13. Never plan assertThrows(IOException.class, () -> method(null)) "
+    "UNLESS the BEHAVIORAL CONSTRAINTS section explicitly states that this method "
+    "throws IOException when the argument is null. In all other cases, null "
+    "dereferences throw NullPointerException, not a checked exception."
 --- Files ---
 14. Never use File.createTempFile() for happy path tests. Always use a real resource file from AVAILABLE TEST RESOURCE FILES.
 15. Never hardcode placeholder file paths. Use getClass().getClassLoader().getResource("FILENAME").toURI() with a filename from AVAILABLE TEST RESOURCE FILES.
@@ -469,7 +520,9 @@ Signature: {method.get('signature', '')}
 Output ONLY the raw Java source code. No explanations, no markdown fences.
 The output must start with the package declaration.
 
-Generate the test class now:"""
+Generate the test class now:
+```java
+package"""
 
     return prompt
 
@@ -505,7 +558,29 @@ def _format_inventory_for_retry(method, class_inventory):
     return "\n".join(lines) + "\n" if found else ""
 
 
-def build_retry_prompt(error_message, failing_test, method, class_inventory=None):
+_TYPE_ERROR_SIGNALS = (
+    "incompatible types",
+    "no suitable constructor",
+    "cannot find symbol: constructor",
+    "cannot be applied to",
+)
+
+
+def _classify_error(error_message: str) -> str:
+    """
+    Returns "type_error" if *error_message* contains any of the known C2/C5
+    type-or-constructor error signals; otherwise returns "other".
+    """
+    if not error_message:
+        return "other"
+    lower = error_message.lower()
+    if any(signal in lower for signal in _TYPE_ERROR_SIGNALS):
+        return "type_error"
+    return "other"
+
+
+def build_retry_prompt(error_message, failing_test, method,
+                       class_inventory=None, dep_chain=None):
     """
     Builds the retry prompt when the generated test fails.
 
@@ -513,11 +588,27 @@ def build_retry_prompt(error_message, failing_test, method, class_inventory=None
         error_message: compiler or runtime error string
         failing_test: the generated test code that failed
         method: method metadata dict
+        class_inventory: optional class inventory dict
+        dep_chain: optional dep_chain entry for construction guidance
     """
     test_class_name = f"{method['class_name']}_{method['method_name']}_Test"
     package = '.'.join(method['full_name'].split('.')[:-2])
     import_section = _format_imports(method)
     dep_section = _format_dependency_signatures(method)
+
+    error_kind = _classify_error(error_message)
+    if error_kind == "type_error":
+        constraint_3 = (
+            "3. For this type or constructor error, rewrite the entire declaration "
+            "and construction block for the affected variable. "
+            "Do not change any other test method or any line unrelated to the failing variable."
+        )
+    else:
+        constraint_3 = (
+            "3. Fix ONLY the specific line the error points to. "
+            "Do NOT rewrite parts that were correct. "
+            "Do NOT introduce any new class or method that is not already present in the failing test."
+        )
 
     prompt = f"""The JUnit 5 test you generated previously failed. Carefully read the error, identify the root cause, and produce a fully corrected version.
 
@@ -537,7 +628,7 @@ def build_retry_prompt(error_message, failing_test, method, class_inventory=None
 === STRICT CONSTRAINTS ===
 1. Class name MUST be exactly: {test_class_name}
 2. Package MUST be exactly: {package}
-3. Fix ONLY the specific line the error points to. Do NOT rewrite parts that were correct. Do NOT introduce any new class or method that is not already present in the failing test.
+{constraint_3}
 4. For classes in ALLOWED DEPENDENCY SIGNATURES: only call methods listed there. For classes in AVAILABLE PROJECT CLASSES: only call methods shown in their "methods" list. Do not invent method names.
 5. For every non-java.lang class you reference, add an explicit import. Copy the exact import line from SOURCE FILE IMPORTS. If a class is not listed there and is not a JUnit 5 / Java SE class, remove it from the test.
 6. Do NOT use internal implementation classes — only use public API types needed to call the method and verify its return value.
@@ -564,6 +655,10 @@ Output ONLY the corrected raw Java source code, starting with the package declar
     if dep_section:
         prompt += "=== ALLOWED DEPENDENCY SIGNATURES ===\n" + dep_section + "\n\n"
 
+    construction_section = _format_construction_section(dep_chain)
+    if construction_section:
+        prompt += "=== HOW TO CONSTRUCT EACH INPUT ===\n" + construction_section + "\n\n"
+
     inventory_section = _format_inventory_for_retry(method, class_inventory)
     if inventory_section:
         prompt += inventory_section + "\n"
@@ -572,15 +667,50 @@ Output ONLY the corrected raw Java source code, starting with the package declar
     return prompt
 
 
-def build_allowlist_violation_prompt(violations, generated_test, method):
+def _parse_violation(v: str):
     """
-    Builds a prompt when the generated test calls methods that are not in
-    dependency_signatures (hallucinated methods).
+    Returns a (kind, data) tuple for a violation string.
+
+    kind == 'HALLUCINATED_METHOD': data is the plain "ClassName.methodName" string.
+    kind == 'TYPE_MISMATCH':       data is a dict with keys:
+        qualified    – "ClassName.methodName"
+        n_args       – int, number of args actually passed
+        overloads    – list[list[str]], known parameter-type lists
+    """
+    if v.startswith("TYPE_MISMATCH::"):
+        parts = v.split("::")
+        if len(parts) >= 4:
+            qualified = parts[1]
+            n_args_str = parts[2]
+            overloads_raw = parts[3]
+            overloads = [
+                [t for t in ol.split(',') if t] if ol else []
+                for ol in overloads_raw.split('||')
+            ]
+            return 'TYPE_MISMATCH', {
+                'qualified': qualified,
+                'n_args': int(n_args_str) if n_args_str.isdigit() else n_args_str,
+                'overloads': overloads,
+            }
+    return 'HALLUCINATED_METHOD', v
+
+
+def build_allowlist_violation_prompt(violations, generated_test, method,
+                                     dep_chain=None, class_inventory=None):
+    """
+    Builds a prompt when the generated test has allowlist violations.
+
+    Handles two violation kinds:
+      - HALLUCINATED_METHOD ("ClassName.methodName") — method does not exist.
+      - TYPE_MISMATCH ("TYPE_MISMATCH::..." encoded string) — method exists but
+        was called with the wrong number of arguments.
 
     Args:
-        violations: list of "ClassName.methodName" strings that were hallucinated
+        violations: list of violation strings from check_against_allowlist
         generated_test: the generated test code that failed the allowlist check
         method: method metadata dict
+        dep_chain: optional dep_chain entry (passed through to _format_construction_section)
+        class_inventory: optional class inventory dict (passed through to _format_inventory_for_retry)
     """
     test_class_name = f"{method['class_name']}_{method['method_name']}_Test"
     package = '.'.join(method['full_name'].split('.')[:-2])
@@ -599,14 +729,71 @@ def build_allowlist_violation_prompt(violations, generated_test, method):
             allowlist_lines.append(f"//     [{d['kind']}] {d['signature']}")
     allowlist_section = "\n".join(allowlist_lines)
 
-    violations_str = "\n".join(f"  - {v}" for v in violations)
+    # Separate violations into the two kinds
+    hallucinated = []
+    type_mismatches = []
+    for v in violations:
+        kind, data = _parse_violation(v)
+        if kind == 'TYPE_MISMATCH':
+            type_mismatches.append(data)
+        else:
+            hallucinated.append(data)
 
-    prompt = f"""The test you generated calls methods that do NOT exist in the allowed dependency signatures. These hallucinated methods will cause compilation or runtime failures.
+    # Build the violations block
+    violations_parts = []
 
-=== HALLUCINATED METHODS (these do not exist — remove or replace them) ===
-{violations_str}
+    if hallucinated:
+        hm_lines = ["=== HALLUCINATED METHODS (these do not exist — remove or replace them) ==="]
+        for v in hallucinated:
+            hm_lines.append(f"  - {v}")
+        violations_parts.append("\n".join(hm_lines))
 
-=== GENERATED TEST (contains hallucinated calls) ===
+    if type_mismatches:
+        tm_lines = ["=== WRONG ARGUMENT COUNT (method exists but called with wrong number of arguments) ==="]
+        for tm in type_mismatches:
+            qualified = tm['qualified']
+            method_name = qualified.split('.')[-1]
+            n_args = tm['n_args']
+            overloads = tm['overloads']
+            tm_lines.append(f"  Called: {qualified} with {n_args} args")
+            tm_lines.append(f"  Known overloads:")
+            for ol in overloads:
+                if ol:
+                    tm_lines.append(f"    - {method_name}({', '.join(ol)})")
+                else:
+                    tm_lines.append(f"    - {method_name}()")
+        violations_parts.append("\n".join(tm_lines))
+
+    violations_block = "\n\n".join(violations_parts)
+
+    # Choose a header that accurately reflects the kinds of violations present
+    if hallucinated and type_mismatches:
+        header = (
+            "The test you generated has two kinds of problems: methods that do not exist "
+            "(hallucinated), and methods called with the wrong number of arguments (type mismatch)."
+        )
+    elif hallucinated:
+        header = (
+            "The test you generated calls methods that do NOT exist in the allowed dependency "
+            "signatures. These hallucinated methods will cause compilation or runtime failures."
+        )
+    else:
+        header = (
+            "The test you generated calls methods with the wrong number of arguments. "
+            "Check the known overload signatures below and use the correct argument count."
+        )
+
+    constraint_3 = (
+        "3. You MUST NOT call any method listed under HALLUCINATED METHODS above."
+        if hallucinated else
+        "3. You MUST NOT use the wrong number of arguments for any method call."
+    )
+
+    prompt = f"""{header}
+
+{violations_block}
+
+=== GENERATED TEST (contains violations) ===
 {generated_test}
 
 === METHOD UNDER TEST ===
@@ -619,7 +806,7 @@ def build_allowlist_violation_prompt(violations, generated_test, method):
 === STRICT CONSTRAINTS ===
 1. Class name MUST be exactly: {test_class_name}
 2. Package MUST be exactly: {package}
-3. You MUST NOT call any method listed under HALLUCINATED METHODS above.
+{constraint_3}
 4. You MUST ONLY call methods explicitly listed in ALLOWED DEPENDENCY SIGNATURES below.
 5. Do NOT invent method names, parameter types, or constructors — use only what is in the allowlist.
 6. For every non-java.lang class you reference, add an explicit import from SOURCE FILE IMPORTS.
@@ -636,6 +823,14 @@ Output ONLY the corrected raw Java source code, starting with the package declar
 
     if allowlist_section:
         prompt += allowlist_section + "\n\n"
+
+    construction_section = _format_construction_section(dep_chain)
+    if construction_section:
+        prompt += construction_section + "\n\n"
+
+    inventory_section = _format_inventory_for_retry(method, class_inventory)
+    if inventory_section:
+        prompt += inventory_section + "\n\n"
 
     prompt += "\nGenerate the corrected test class now:"
     return prompt

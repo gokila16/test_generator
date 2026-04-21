@@ -11,7 +11,7 @@ def print_progress(processed, total, results):
     for status, count in counts.items():
         print(f"  {status}: {count}")
 
-def print_final_report(results, report_path, start_time):
+def print_final_report(results, report_path, start_time, truncation_count=0):
     """Prints and saves final report"""
     total = len(results)
     counts = {}
@@ -40,12 +40,25 @@ def print_final_report(results, report_path, start_time):
         pct = count / total * 100 if total > 0 else 0
         lines.append(f"{status:<20} {count} ({pct:.1f}%)")
 
+    fail_reasons = {}
+    for r in results.values():
+        if r.get('status') == 'EXTRACTION_FAILED':
+            reason = r.get('extraction_fail_reason') or 'unknown'
+            fail_reasons[reason] = fail_reasons.get(reason, 0) + 1
+
     lines += [
         f"Retry triggered:   {retried}",
         f"Retry succeeded:   {retry_success}",
+        f"Truncations cont.: {truncation_count}",
         f"Total time:        {elapsed} minutes",
-        "=" * 40,
     ]
+
+    if fail_reasons:
+        lines.append("--- Extraction fail reasons ---")
+        for reason, count in sorted(fail_reasons.items()):
+            lines.append(f"  {reason:<25} {count}")
+
+    lines.append("=" * 40)
 
     report = '\n'.join(lines)
     print(report)

@@ -53,6 +53,70 @@ def _check_mockito(java_code):
     return bool(re.search(r'^\s*import\s+org\.mockito', java_code, re.MULTILINE))
 
 
+def _check_constructor_arities(code, class_inventory):
+    """
+    Checks that every 'new ClassName(...)' call uses an arity matching at least
+    one constructor declared in class_inventory.
+
+    Returns (None, None) when all calls are valid or class_inventory is None/empty.
+    Returns (None, message) — where message starts with 'constructor_arity:' — on
+    the first mismatch found.
+
+    Classes whose simple name is not present in the inventory are silently skipped.
+    """
+    if not class_inventory:
+        return None, None
+
+    # Build simple_name -> [arity, ...] from every entry in the inventory.
+    simple_to_arities = {}
+    for entry in class_inventory.values():
+        simple = entry.get('class_name') or entry.get('full_name', '').split('.')[-1]
+        arities = [len(c.get('params', [])) for c in entry.get('constructors', [])]
+        if simple in simple_to_arities:
+            simple_to_arities[simple].extend(arities)
+        else:
+            simple_to_arities[simple] = arities
+
+    new_pattern = re.compile(r'\bnew\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(')
+
+    for m in new_pattern.finditer(code):
+        class_name = m.group(1)
+        if class_name not in simple_to_arities:
+            continue  # not tracked in inventory — skip
+
+        known_arities = simple_to_arities[class_name]
+
+        # Walk the parenthesised argument list, counting commas at depth 1.
+        paren_start = m.end()  # index of the first char after '('
+        depth = 1
+        i = paren_start
+        commas_at_depth_one = 0
+
+        while i < len(code) and depth > 0:
+            ch = code[i]
+            if ch == '(':
+                depth += 1
+            elif ch == ')':
+                depth -= 1
+                if depth == 0:
+                    break
+            elif ch == ',' and depth == 1:
+                commas_at_depth_one += 1
+            i += 1
+
+        content = code[paren_start:i].strip()
+        arg_count = 0 if not content else commas_at_depth_one + 1
+
+        if arg_count not in known_arities:
+            known_sorted = sorted(set(known_arities))
+            return None, (
+                f"constructor_arity: new {class_name} called with {arg_count} args "
+                f"but known constructors take {known_sorted} args"
+            )
+
+    return None, None
+
+
 def _is_truncated(java_code):
     """
     Returns True if the file appears to be cut off mid-generation.
@@ -212,7 +276,7 @@ def _ensure_package(java_code, expected_package):
     return f"package {expected_package};\n\n" + java_code
 
 
-def post_process_java(java_code, expected_package=None, test_class_name=None, sut_class_name=None):
+def post_process_java(java_code, expected_package=None, test_class_name=None, sut_class_name=None, class_inventory=None):
     """
     Applies all post-processing fixes and validation to generated Java code.
 
@@ -222,19 +286,20 @@ def post_process_java(java_code, expected_package=None, test_class_name=None, su
     3. Add 'throws Exception' to @Test methods that are missing it.
     4. Inject package declaration if absent.
 
-    Validation (returns None to signal rejection):
-    - SUT class absent from code body — wrong class tested        (_is_sut_missing)
-    - Extra top-level class/interface/enum definitions found       (_check_class_redefinition)
-    - Public class name does not match expected test class name    (_check_test_class_name)
-    - No @Test methods present — silent compile-pass, no results  (_has_test_methods)
-    - Mockito import detected                                      (_check_mockito)
-    - File appears truncated — does not end with '}'              (_is_truncated)
-    - All @Test methods are trivial placeholders                   (_has_only_trivial_assertions)
+    Validation (returns (None, rule_name) to signal rejection):
+    - SUT class absent from code body — wrong class tested        rule: "sut_missing"
+    - Extra top-level class/interface/enum definitions found       rule: "class_redefinition"
+    - No @Test methods present — silent compile-pass, no results  rule: "no_test_methods"
+    - Mockito import detected                                      rule: "mockito_import"
+    - File appears truncated — does not end with '}'              rule: "truncated"
+    - All @Test methods are trivial placeholders                   rule: "trivial_assertions"
 
-    Returns the fixed Java code string, or None if the file should be rejected.
+    Returns (fixed_code, None) on success, or (None, rule_name) if the file
+    should be rejected.  For falsy inputs (None / empty string) returns
+    (java_code, None) unchanged.
     """
     if not java_code:
-        return java_code
+        return java_code, None
 
     # --- Fixes ---
     java_code = _collapse_url_variable(java_code)
@@ -246,28 +311,33 @@ def post_process_java(java_code, expected_package=None, test_class_name=None, su
     # --- Validation ---
     if sut_class_name and _is_sut_missing(java_code, sut_class_name):
         print(f"  [POST-PROCESS] Rejected: SUT class '{sut_class_name}' never appears in code body.")
-        return None
+        return None, "sut_missing"
 
     if test_class_name:
         extra_classes = _check_class_redefinition(java_code, test_class_name)
         if extra_classes:
             print(f"  [POST-PROCESS] Rejected: file redefines production class(es): {extra_classes}")
-            return None
+            return None, "class_redefinition"
 
     if not _has_test_methods(java_code):
         print("  [POST-PROCESS] Rejected: no @Test methods found.")
-        return None
+        return None, "no_test_methods"
 
     if _check_mockito(java_code):
         print("  [POST-PROCESS] Rejected: Mockito import detected.")
-        return None
+        return None, "mockito_import"
+
+    _, arity_reason = _check_constructor_arities(java_code, class_inventory)
+    if arity_reason:
+        print(f"  [POST-PROCESS] Rejected: {arity_reason}")
+        return None, arity_reason
 
     if _is_truncated(java_code):
         print("  [POST-PROCESS] Rejected: file appears truncated (does not end with '}').")
-        return None
+        return None, "truncated"
 
     if _has_only_trivial_assertions(java_code):
         print("  [POST-PROCESS] Rejected: all @Test methods are trivial placeholders.")
-        return None
+        return None, "trivial_assertions"
 
-    return java_code
+    return java_code, None

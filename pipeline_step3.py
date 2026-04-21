@@ -1,3 +1,5 @@
+import argparse
+import json
 import os
 from collections import Counter
 from datetime import datetime
@@ -17,6 +19,19 @@ from src.reporter import print_progress, print_final_report
 from src.context_loader import load_context_data, load_class_inventory, get_dependency_chain, get_caller_snippets
 from src.java_post_processor import post_process_java
 
+def _extract_and_process(response_text, class_inventory=None, **pp_kwargs):
+    """
+    Chains extract_java_code → post_process_java.
+    Returns (java_code, fail_reason): fail_reason is None on success,
+    otherwise the first failing layer's reason string.
+    """
+    raw, extract_reason = extract_java_code(response_text)
+    if raw is None:
+        return None, extract_reason
+    code, pp_reason = post_process_java(raw, class_inventory=class_inventory, **pp_kwargs)
+    return code, pp_reason
+
+
 def assign_unique_keys(methods):
     """Assign a unique results.json key and overload index to each method.
     Overloaded methods (same full_name) get a numeric suffix: full_name_0, full_name_1, ...
@@ -35,8 +50,69 @@ def assign_unique_keys(methods):
     return methods
 
 
-def run_pipeline():
+_COMPARISON_CATEGORIES = [
+    'EXTRACTION_FAILED',
+    'ALLOWLIST_FAILED',
+    'COMPILE_FAILED',
+    'FAILED',
+    'PASSED',
+]
+
+# (direction, threshold) — direction is 'below' or 'above'
+_THRESHOLDS = {
+    'EXTRACTION_FAILED': ('below',  80),
+    'ALLOWLIST_FAILED':  ('below',  50),
+    'COMPILE_FAILED':    ('below', 180),
+    'PASSED':            ('above', 750),
+}
+
+
+def _print_comparison_table(before_counts, after_results):
+    after_counts = Counter(v.get('status', 'UNKNOWN') for v in after_results.values())
+
+    print("\n" + "=" * 58)
+    print("BEFORE / AFTER COMPARISON")
+    print("=" * 58)
+    print(f"  {'Category':<24} {'Before':>6} {'After':>6} {'Delta':>6}")
+    print("-" * 58)
+    for cat in _COMPARISON_CATEGORIES:
+        before    = before_counts.get(cat, 0)
+        after     = after_counts.get(cat, 0)
+        delta     = after - before
+        delta_str = f"+{delta}" if delta > 0 else str(delta)
+        print(f"  {cat:<24} {before:>6} {after:>6} {delta_str:>6}")
+    print("=" * 58)
+
+    # extraction_fail_reason breakdown
+    fail_reasons = {}
+    for r in after_results.values():
+        if r.get('status') == 'EXTRACTION_FAILED':
+            reason = r.get('extraction_fail_reason') or 'unknown'
+            fail_reasons[reason] = fail_reasons.get(reason, 0) + 1
+    if fail_reasons:
+        print("\nExtraction fail reasons (after):")
+        for reason, count in sorted(fail_reasons.items()):
+            print(f"  {reason:<30} {count}")
+
+    # Target threshold check
+    print("\nTarget thresholds:")
+    all_met = True
+    for cat, (direction, threshold) in _THRESHOLDS.items():
+        count = after_counts.get(cat, 0)
+        met   = (count < threshold) if direction == 'below' else (count > threshold)
+        mark  = 'PASS' if met else 'FAIL'
+        print(f"  [{mark}] {cat} {direction} {threshold}: got {count}")
+        if not met:
+            all_met = False
+    print("\n" + ("All targets met." if all_met else "One or more targets NOT met."))
+    print("=" * 58)
+
+
+def run_pipeline(skip_set=None):
+    if skip_set is None:
+        skip_set = set()
     start_time = datetime.now()
+    truncation_count = 0
     print("=" * 40)
     print("PIPELINE STEP 3: TEST GENERATION")
     print("=" * 40)
@@ -50,14 +126,24 @@ def run_pipeline():
     # Load methods and assign unique keys for overloads
     methods = assign_unique_keys(load_methods(config.INPUT_JSON))
 
-    # Skip already processed
-    existing = load_results(config.RESULTS_JSON)
-    remaining = [
-        m for m in methods
-        if not is_already_processed(config.RESULTS_JSON, m['unique_key'])
-    ]
-    print(f"Already done: {len(existing)}")
-    print(f"Remaining:    {len(remaining)}")
+    # Snapshot before-counts for the comparison table printed at the end
+    existing      = load_results(config.RESULTS_JSON)
+    before_counts = Counter(v.get('status', 'UNKNOWN') for v in existing.values())
+
+    if skip_set:
+        # Re-run every method that is NOT in the skip list, even if it was
+        # previously processed.  Methods in skip_set keep their existing results.
+        remaining = [m for m in methods if m['unique_key'] not in skip_set]
+        print(f"Skip-file mode: protecting {len(skip_set)} PASSED baseline methods")
+        print(f"Remaining (to re-run): {len(remaining)}")
+    else:
+        # Default behaviour: skip anything already recorded in results.json
+        remaining = [
+            m for m in methods
+            if not is_already_processed(config.RESULTS_JSON, m['unique_key'])
+        ]
+        print(f"Already done: {len(existing)}")
+        print(f"Remaining:    {len(remaining)}")
 
     for i, method in enumerate(remaining):
         full_name      = method['full_name']
@@ -75,7 +161,9 @@ def run_pipeline():
         dep_chain       = get_dependency_chain(dep_chains, method)
         caller_snippets = get_caller_snippets(call_graph, method, max_snippets=2)
         plan_prompt     = build_planning_prompt(method, dep_chain=dep_chain, caller_snippets=caller_snippets, class_inventory=class_inventory)
-        plan_response  = call_llm(plan_prompt)
+        plan_response, _trunc = call_llm(plan_prompt, method_name=method_name)
+        if _trunc:
+            truncation_count += 1
 
         save_prompt(config.PROMPTS_DIR, unique_key, plan_prompt, is_plan=True)
         save_plan(config.PLANS_DIR, unique_key, plan_response)
@@ -91,7 +179,9 @@ def run_pipeline():
 
         # ---- STEP 2: GENERATION FROM PLAN ----
         gen_prompt = build_generation_from_plan_prompt(method, plan_response)
-        response   = call_llm(gen_prompt)
+        response, _trunc = call_llm(gen_prompt, method_name=method_name)
+        if _trunc:
+            truncation_count += 1
 
         save_prompt(config.PROMPTS_DIR, unique_key, gen_prompt)
         save_response(config.RESPONSES_DIR, unique_key, response)
@@ -105,15 +195,38 @@ def run_pipeline():
             })
             continue
 
-        java_code = post_process_java(extract_java_code(response), expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
+        java_code, fail_reason = _extract_and_process(response, class_inventory=class_inventory, expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
         if not java_code:
-            save_result(config.RESULTS_JSON, unique_key, {
-                'status':          'EXTRACTION_FAILED',
-                'retry_triggered': False,
-                'retry_succeeded': None,
-                'error_message':   'Could not extract Java code'
-            })
-            continue
+            # ---- LIGHTWEIGHT PROSE-RECOVERY ATTEMPT (does not consume Maven retry budget) ----
+            print(f"  Extraction failed ({fail_reason}). Attempting prose-recovery prompt...")
+            recovery_prompt = (
+                    f"Your previous response was rejected because it did not reference "
+                    f"the class under test: {class_name}. "
+                    f"Output only the raw Java source code starting with the package "
+                    f"declaration. The test class MUST reference {class_name} as a "
+                    f"type, constructor call, or static reference. No explanations, no markdown fences."
+)
+            recovery_response, _trunc = call_llm(recovery_prompt, method_name=method_name)
+            if _trunc:
+                truncation_count += 1
+            if recovery_response:
+                java_code, fail_reason = _extract_and_process(
+                    recovery_response,
+                    class_inventory=class_inventory,
+                    expected_package=package,
+                    test_class_name=base_test_class,
+                    sut_class_name=class_name,
+                )
+
+            if not java_code:
+                save_result(config.RESULTS_JSON, unique_key, {
+                    'status':                  'EXTRACTION_FAILED',
+                    'extraction_fail_reason':  fail_reason,
+                    'retry_triggered':         False,
+                    'retry_succeeded':         None,
+                    'error_message':           'Could not extract Java code'
+                })
+                continue
 
         # ---- STATIC ALLOWLIST CHECK ----
         # Verify the generated test only calls methods present in dependency_signatures.
@@ -140,9 +253,13 @@ def run_pipeline():
             violation_prompt = build_allowlist_violation_prompt(
                 violations=allowlist_violations,
                 generated_test=java_code,
-                method=method
+                method=method,
+                dep_chain=dep_chain,
+                class_inventory=class_inventory,
             )
-            violation_response = call_llm(violation_prompt)
+            violation_response, _trunc = call_llm(violation_prompt, method_name=method_name)
+            if _trunc:
+                truncation_count += 1
 
             save_prompt(config.PROMPTS_DIR, unique_key, violation_prompt, is_allowlist=True)
             save_response(config.RESPONSES_DIR, unique_key, violation_response, is_allowlist=True)
@@ -151,7 +268,7 @@ def run_pipeline():
                 print("  No LLM response on allowlist retry.")
                 break
 
-            new_java = post_process_java(extract_java_code(violation_response), expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
+            new_java, _ = _extract_and_process(violation_response, class_inventory=class_inventory, expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
             if new_java:
                 java_code = new_java
             else:
@@ -200,8 +317,11 @@ def run_pipeline():
                 failing_test=java_code,
                 method=method,
                 class_inventory=class_inventory,
+                dep_chain=dep_chain,
             )
-            retry_response = call_llm(retry_prompt)
+            retry_response, _trunc = call_llm(retry_prompt, method_name=method_name)
+            if _trunc:
+                truncation_count += 1
 
             save_prompt(config.PROMPTS_DIR, full_name,
                        retry_prompt, is_retry=True)
@@ -218,7 +338,7 @@ def run_pipeline():
                 })
                 break
 
-            retry_java = post_process_java(extract_java_code(retry_response), expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
+            retry_java, _ = _extract_and_process(retry_response, class_inventory=class_inventory, expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
             if not retry_java:
                 retry_succeeded = False
                 break
@@ -244,9 +364,13 @@ def run_pipeline():
                 violation_prompt = build_allowlist_violation_prompt(
                     violations=retry_allowlist_violations,
                     generated_test=retry_java,
-                    method=method
+                    method=method,
+                    dep_chain=dep_chain,
+                    class_inventory=class_inventory,
                 )
-                violation_response = call_llm(violation_prompt)
+                violation_response, _trunc = call_llm(violation_prompt, method_name=method_name)
+                if _trunc:
+                    truncation_count += 1
 
                 save_prompt(config.PROMPTS_DIR, unique_key, violation_prompt, is_allowlist=True)
                 save_response(config.RESPONSES_DIR, unique_key, violation_response, is_allowlist=True)
@@ -255,7 +379,7 @@ def run_pipeline():
                     print("  No LLM response on allowlist retry.")
                     break
 
-                new_java = post_process_java(extract_java_code(violation_response), expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
+                new_java, _ = _extract_and_process(violation_response, class_inventory=class_inventory, expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
                 if new_java:
                     retry_java = new_java
                 else:
@@ -313,6 +437,25 @@ def run_pipeline():
     all_results = load_results(config.RESULTS_JSON)
     print_final_report(all_results, config.FINAL_REPORT, start_time)
 
+    if skip_set:
+        # Only meaningful when a skip-file was supplied (otherwise before == after
+        # for already-processed methods and the table would be misleading).
+        _print_comparison_table(before_counts, all_results)
+
 
 if __name__ == '__main__':
-    run_pipeline()
+    parser = argparse.ArgumentParser(description='Pipeline Step 3: Test Generation')
+    parser.add_argument(
+        '--skip-file',
+        metavar='PATH',
+        help='JSON file containing unique_keys to skip (preserve existing PASSED results)',
+    )
+    args = parser.parse_args()
+
+    skip_set = set()
+    if args.skip_file:
+        with open(args.skip_file, encoding='utf-8') as fh:
+            skip_set = set(json.load(fh))
+        print(f"Loaded {len(skip_set)} keys to skip from {args.skip_file}")
+
+    run_pipeline(skip_set=skip_set)

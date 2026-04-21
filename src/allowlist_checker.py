@@ -8,14 +8,99 @@ _JAVA_OBJECT_METHODS = {
     'equals', 'hashCode', 'toString', 'getClass', 'notify', 'notifyAll', 'wait',
 }
 
+_PARAM_MODIFIERS = frozenset({'final', 'volatile', 'transient'})
+
+
+def _parse_param_types(signature: str) -> list:
+    """
+    Extracts parameter types from a full Java method signature string.
+    Returns only the simple (unqualified) type name for each parameter.
+
+    Examples:
+        "public void save(File fileName) throws IOException" -> ["File"]
+        "public boolean load(String name, int index)"       -> ["String", "int"]
+        "public void close()"                               -> []
+    """
+    m = re.search(r'\(([^)]*)\)', signature)
+    if not m:
+        return []
+    params_str = m.group(1).strip()
+    if not params_str:
+        return []
+
+    # Split by comma, but respect angle-bracket depth (for generic types).
+    raw_params = []
+    depth = 0
+    current = []
+    for ch in params_str:
+        if ch == '<':
+            depth += 1
+            current.append(ch)
+        elif ch == '>':
+            depth -= 1
+            current.append(ch)
+        elif ch == ',' and depth == 0:
+            raw_params.append(''.join(current).strip())
+            current = []
+        else:
+            current.append(ch)
+    if current:
+        raw_params.append(''.join(current).strip())
+
+    types = []
+    for param in raw_params:
+        if not param:
+            continue
+        # Strip varargs marker
+        param = param.replace('...', '').strip()
+        # Remove the trailing variable name (last identifier token)
+        type_part = re.sub(r'\s+\w+\s*$', '', param).strip()
+        if not type_part:
+            # No space between type and name — the whole token is the type
+            type_part = param
+        # Remove modifier keywords
+        type_tokens = [t for t in type_part.split() if t not in _PARAM_MODIFIERS]
+        if not type_tokens:
+            continue
+        # First remaining token is the type; strip package prefix and generics
+        raw_type = type_tokens[0]
+        simple = raw_type.split('.')[-1].split('<')[0]
+        types.append(simple)
+    return types
+
+
+def _count_call_args(code: str, paren_start: int) -> int:
+    """
+    Counts the number of arguments in a method call starting just after '('.
+    Tracks paren depth so nested calls do not inflate the count.
+    Returns 0 for empty argument lists.
+    """
+    depth = 1
+    i = paren_start
+    commas = 0
+    while i < len(code) and depth > 0:
+        ch = code[i]
+        if ch == '(':
+            depth += 1
+        elif ch == ')':
+            depth -= 1
+            if depth == 0:
+                break
+        elif ch == ',' and depth == 1:
+            commas += 1
+        i += 1
+    content = code[paren_start:i].strip()
+    return 0 if not content else commas + 1
+
 
 def _build_allowlist(method):
     """
-    Builds a set of (class_name, method_name) pairs from dependency_signatures.
-    Also includes a set of allowed class names for cross-referencing.
+    Builds a dict mapping (class_name, method_name) -> list[list[str]]
+    from dependency_signatures, where each inner list is the parameter types
+    for one overload.
     """
     deps = method.get('dependency_signatures', [])
-    allowed = set()
+    allowed = {}
     for d in deps:
         sig = d['signature']
         class_name = d['class_name']
@@ -25,7 +110,11 @@ def _build_allowlist(method):
             method_name = m.group(1)
             # Skip constructors (same name as class)
             if method_name != class_name:
-                allowed.add((class_name, method_name))
+                key = (class_name, method_name)
+                param_types = _parse_param_types(sig)
+                if key not in allowed:
+                    allowed[key] = []
+                allowed[key].append(param_types)
     return allowed
 
 
@@ -256,11 +345,24 @@ def check_against_allowlist(java_code, method, class_inventory=None):
             resolved_class = receiver
 
         key = (resolved_class, called_method)
+        qualified = f"{resolved_class}.{called_method}"
         if key not in allowlist:
-            qualified = f"{resolved_class}.{called_method}"
+            # HALLUCINATED_METHOD: the method does not exist in dependency_signatures
             if qualified not in seen:
                 seen.add(qualified)
                 violations.append(qualified)
+        else:
+            # Method exists — check that at least one overload matches the call arity
+            known_overloads = allowlist[key]
+            known_arities = [len(ol) for ol in known_overloads]
+            call_arg_count = _count_call_args(java_code, match.end())
+            if call_arg_count not in known_arities:
+                if qualified not in seen:
+                    seen.add(qualified)
+                    overloads_encoded = '||'.join(','.join(ol) for ol in known_overloads)
+                    violations.append(
+                        f"TYPE_MISMATCH::{qualified}::{call_arg_count}::{overloads_encoded}"
+                    )
 
     if violations:
         print("  [ALLOWLIST DEBUG] Violations found:")
