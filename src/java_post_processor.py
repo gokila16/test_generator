@@ -194,6 +194,62 @@ _URL_VAR_PATTERN = re.compile(
 )
 
 
+def apply_java_fixes(java_code, expected_package=None):
+    """
+    Applies all post-processing fixes without running any validation.
+    Safe to call on any extracted Java string — used by the Tier 3 pipeline
+    path to produce a fixable file for Maven before validation would reject it.
+    """
+    if not java_code:
+        return java_code
+    java_code = _collapse_url_variable(java_code)
+    java_code = _ensure_url_import(java_code)
+    java_code = _add_throws_exception(java_code)
+    if expected_package is not None:
+        java_code = _ensure_package(java_code, expected_package)
+    return java_code
+
+
+def _check_nested_class_redefinition(java_code, class_inventory):
+    """
+    Detects nested (indented) class/interface/enum declarations whose simple
+    name matches a known production class in class_inventory.
+
+    The LLM is allowed to declare helper types as static nested classes inside
+    the test class body.  However it must not redefine a production class — even
+    as a nested type — because that silently shadows the real class and can make
+    tests pass against a fake implementation.
+
+    Returns a list of offending class names (empty list means all clear).
+    """
+    if not class_inventory:
+        return []
+
+    # Build set of all known production simple names from the inventory.
+    production_names = set()
+    for entry in class_inventory.values():
+        simple = entry.get('class_name') or entry.get('full_name', '').split('.')[-1]
+        if simple:
+            production_names.add(simple)
+
+    # Match class/interface/enum declarations that have leading whitespace
+    # (i.e. they are indented — inside some outer class body).
+    nested_pattern = re.compile(
+        r'^\s+'                                                      # leading whitespace — nested
+        r'(?:(?:public|protected|private|abstract|final|static|strictfp)\s+)*'
+        r'(?:class|interface|enum)\s+([A-Za-z_][A-Za-z0-9_]*)',
+        re.MULTILINE,
+    )
+
+    violations = []
+    for m in nested_pattern.finditer(java_code):
+        name = m.group(1)
+        if name in production_names:
+            violations.append(name)
+
+    return violations
+
+
 def _collapse_url_variable(java_code):
     """
     Collapses two-line URL variable pattern into a single line.
@@ -302,11 +358,7 @@ def post_process_java(java_code, expected_package=None, test_class_name=None, su
         return java_code, None
 
     # --- Fixes ---
-    java_code = _collapse_url_variable(java_code)
-    java_code = _ensure_url_import(java_code)
-    java_code = _add_throws_exception(java_code)
-    if expected_package is not None:
-        java_code = _ensure_package(java_code, expected_package)
+    java_code = apply_java_fixes(java_code, expected_package)
 
     # --- Validation ---
     if sut_class_name and _is_sut_missing(java_code, sut_class_name):
@@ -316,8 +368,13 @@ def post_process_java(java_code, expected_package=None, test_class_name=None, su
     if test_class_name:
         extra_classes = _check_class_redefinition(java_code, test_class_name)
         if extra_classes:
-            print(f"  [POST-PROCESS] Rejected: file redefines production class(es): {extra_classes}")
+            print(f"  [POST-PROCESS] Rejected: file redefines top-level class(es): {extra_classes}")
             return None, "class_redefinition"
+
+    nested_violations = _check_nested_class_redefinition(java_code, class_inventory)
+    if nested_violations:
+        print(f"  [POST-PROCESS] Rejected: nested class(es) shadow production class(es): {nested_violations}")
+        return None, "nested_class_redefinition"
 
     if not _has_test_methods(java_code):
         print("  [POST-PROCESS] Rejected: no @Test methods found.")

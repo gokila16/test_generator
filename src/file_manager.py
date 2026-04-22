@@ -43,11 +43,13 @@ def get_test_destination(full_name, class_name, method_name, overload_index=None
     test_class = get_test_class_name(class_name, method_name, overload_index)
     return dest_dir, f"{test_class}.java"
 
-def save_prompt(prompts_dir, full_name, prompt, is_retry=False, is_allowlist=False, is_plan=False):
+def save_prompt(prompts_dir, full_name, prompt, is_retry=False, is_allowlist=False, is_plan=False, is_recovery=False):
     """Saves prompt to prompts/ folder"""
     os.makedirs(prompts_dir, exist_ok=True)
     if is_plan:
         suffix = '_plan_prompt.txt'
+    elif is_recovery:
+        suffix = '_recovery_prompt.txt'
     elif is_allowlist:
         suffix = '_allowlist_prompt.txt'
     elif is_retry:

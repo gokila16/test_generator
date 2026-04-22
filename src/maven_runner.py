@@ -37,6 +37,8 @@ def compile_and_run(test_file_path, full_name, class_name, method_name, overload
     )
     dest_path = os.path.join(dest_dir, filename)
     test_class_name = get_test_class_name(class_name, method_name, overload_index)
+    package = '.'.join(full_name.split('.')[:-2])
+    fqcn = f"{package}.{test_class_name}" if package else test_class_name
     env = _maven_env()
 
     try:
@@ -58,14 +60,14 @@ def compile_and_run(test_file_path, full_name, class_name, method_name, overload
             env=env
         )
 
-        if compile_result.returncode != 0:
-            return False, False, (compile_result.stderr
-                                  or compile_result.stdout)
+        compile_output = compile_result.stderr or compile_result.stdout or ''
+        if compile_result.returncode != 0 or 'COMPILATION ERROR' in compile_output:
+            return False, False, compile_output
 
         run_result = subprocess.run(
             [
                 MAVEN_CMD, 'surefire:test',
-                f'-Dtest={test_class_name}',
+                f'-Dtest={fqcn}',
                 '-q'
             ],
             cwd=config.PDFBOX_DIR,

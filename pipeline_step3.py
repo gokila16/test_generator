@@ -6,8 +6,9 @@ from datetime import datetime
 import config
 from src.loader import load_methods
 from src.prompt_builder import (build_planning_prompt, build_generation_from_plan_prompt,
-                                build_retry_prompt, build_allowlist_violation_prompt)
-from src.allowlist_checker import check_against_allowlist
+                                build_retry_prompt, build_allowlist_violation_prompt,
+                                build_recovery_prompt)
+from src.allowlist_checker import check_against_allowlist, validate_imports
 from src.llm_client import call_llm
 from src.code_extractor import extract_java_code
 from src.file_manager import (save_prompt, save_response, save_plan,
@@ -17,19 +18,47 @@ from src.result_tracker import (load_results, save_result,
                                  is_already_processed)
 from src.reporter import print_progress, print_final_report
 from src.context_loader import load_context_data, load_class_inventory, get_dependency_chain, get_caller_snippets
-from src.java_post_processor import post_process_java
+from src.java_post_processor import post_process_java, apply_java_fixes
 
 def _extract_and_process(response_text, class_inventory=None, **pp_kwargs):
     """
     Chains extract_java_code → post_process_java.
-    Returns (java_code, fail_reason): fail_reason is None on success,
-    otherwise the first failing layer's reason string.
+
+    Returns a 3-tuple (java_code, raw_extracted, fail_reason):
+      - java_code:      fully fixed + validated code, or None on failure
+      - raw_extracted:  code from extract_java_code before post-processing
+                        (None if extraction itself failed); used by Tier 3
+                        to bypass validation and route straight to Maven
+      - fail_reason:    None on success, otherwise the failing layer's reason
     """
     raw, extract_reason = extract_java_code(response_text)
     if raw is None:
-        return None, extract_reason
+        return None, None, extract_reason
     code, pp_reason = post_process_java(raw, class_inventory=class_inventory, **pp_kwargs)
-    return code, pp_reason
+    return code, raw, pp_reason
+
+
+# Tier classification for extraction failures.
+#
+# Tier 1 — no usable Java at all: send recovery prompt (with plan)
+# Tier 2 — Java exists but Maven won't surface the problem: send recovery prompt
+# Tier 3 — Java exists and Maven will produce a compile error: skip recovery,
+#           apply fixes to raw code and hand straight to Maven/retry loop
+_TIER1 = {'no_code_block', 'no_test_annotation'}
+_TIER2 = {'sut_missing', 'trivial_assertions', 'no_test_methods'}
+_TIER3 = {'truncated', 'mockito_import', 'class_redefinition', 'nested_class_redefinition'}
+
+
+def _classify_fail_reason(reason):
+    """Returns 1, 2, or 3 for the given extraction/post-process fail reason."""
+    if reason in _TIER1:
+        return 1
+    if reason in _TIER2:
+        return 2
+    # constructor_arity messages start with 'constructor_arity:'
+    if reason in _TIER3 or (reason and reason.startswith('constructor_arity:')):
+        return 3
+    return 1  # unknown reasons default to recovery
 
 
 def assign_unique_keys(methods):
@@ -195,28 +224,39 @@ def run_pipeline(skip_set=None):
             })
             continue
 
-        java_code, fail_reason = _extract_and_process(response, class_inventory=class_inventory, expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
+        java_code, raw_code, fail_reason = _extract_and_process(response, class_inventory=class_inventory, expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
         if not java_code:
-            # ---- LIGHTWEIGHT PROSE-RECOVERY ATTEMPT (does not consume Maven retry budget) ----
-            print(f"  Extraction failed ({fail_reason}). Attempting prose-recovery prompt...")
-            recovery_prompt = (
-                    f"Your previous response was rejected because it did not reference "
-                    f"the class under test: {class_name}. "
-                    f"Output only the raw Java source code starting with the package "
-                    f"declaration. The test class MUST reference {class_name} as a "
-                    f"type, constructor call, or static reference. No explanations, no markdown fences."
-)
-            recovery_response, _trunc = call_llm(recovery_prompt, method_name=method_name)
-            if _trunc:
-                truncation_count += 1
-            if recovery_response:
-                java_code, fail_reason = _extract_and_process(
-                    recovery_response,
-                    class_inventory=class_inventory,
-                    expected_package=package,
-                    test_class_name=base_test_class,
-                    sut_class_name=class_name,
+            tier = _classify_fail_reason(fail_reason)
+            print(f"  Extraction failed ({fail_reason}) [Tier {tier}].")
+
+            if tier == 3 and raw_code is not None:
+                # ---- TIER 3: bypass recovery, apply fixes, hand to Maven/retry ----
+                print(f"  Routing directly to Maven for compile-error recovery.")
+                java_code = apply_java_fixes(raw_code, expected_package=package)
+            else:
+                # ---- TIER 1 / 2: targeted recovery prompt anchored on the plan ----
+                print(f"  Attempting recovery prompt...")
+                recovery_prompt = build_recovery_prompt(
+                    fail_reason, response, method, plan_response
                 )
+                recovery_response, _trunc = call_llm(recovery_prompt, method_name=method_name)
+                if _trunc:
+                    truncation_count += 1
+                save_prompt(config.PROMPTS_DIR, unique_key, recovery_prompt, is_recovery=True)
+                save_response(config.RESPONSES_DIR, unique_key, recovery_response, is_allowlist=False)
+
+                if recovery_response:
+                    java_code, raw_code, fail_reason = _extract_and_process(
+                        recovery_response,
+                        class_inventory=class_inventory,
+                        expected_package=package,
+                        test_class_name=base_test_class,
+                        sut_class_name=class_name,
+                    )
+                    # If recovery itself produced a Tier 3 failure, still try Maven
+                    if not java_code and _classify_fail_reason(fail_reason) == 3 and raw_code is not None:
+                        print(f"  Recovery also Tier 3 ({fail_reason}). Routing to Maven.")
+                        java_code = apply_java_fixes(raw_code, expected_package=package)
 
             if not java_code:
                 save_result(config.RESULTS_JSON, unique_key, {
@@ -237,11 +277,21 @@ def run_pipeline(skip_set=None):
         allowlist_violations = []
 
         while True:
-            allowlist_passed, allowlist_violations = check_against_allowlist(java_code, method, class_inventory)
+            import_violations = validate_imports(
+                java_code=java_code,
+                source_file_imports=method.get('source_file_imports', []),
+                class_inventory=class_inventory,
+            )
+            if import_violations:
+                allowlist_passed = False
+                allowlist_violations = import_violations
+                print(f"  Import validation failed. Hallucinated imports: {allowlist_violations}")
+            else:
+                allowlist_passed, allowlist_violations = check_against_allowlist(java_code, method, class_inventory)
+                if not allowlist_passed:
+                    print(f"  Allowlist check failed. Hallucinated methods: {allowlist_violations}")
             if allowlist_passed:
                 break
-
-            print(f"  Allowlist check failed. Hallucinated methods: {allowlist_violations}")
 
             if allowlist_retry_count >= MAX_ALLOWLIST_RETRIES:
                 print(f"  Allowlist retries exhausted ({MAX_ALLOWLIST_RETRIES}). Skipping Maven.")
@@ -268,7 +318,7 @@ def run_pipeline(skip_set=None):
                 print("  No LLM response on allowlist retry.")
                 break
 
-            new_java, _ = _extract_and_process(violation_response, class_inventory=class_inventory, expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
+            new_java, _, _ = _extract_and_process(violation_response, class_inventory=class_inventory, expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
             if new_java:
                 java_code = new_java
             else:
@@ -338,7 +388,7 @@ def run_pipeline(skip_set=None):
                 })
                 break
 
-            retry_java, _ = _extract_and_process(retry_response, class_inventory=class_inventory, expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
+            retry_java, _, _ = _extract_and_process(retry_response, class_inventory=class_inventory, expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
             if not retry_java:
                 retry_succeeded = False
                 break
@@ -379,7 +429,7 @@ def run_pipeline(skip_set=None):
                     print("  No LLM response on allowlist retry.")
                     break
 
-                new_java, _ = _extract_and_process(violation_response, class_inventory=class_inventory, expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
+                new_java, _, _ = _extract_and_process(violation_response, class_inventory=class_inventory, expected_package=package, test_class_name=base_test_class, sut_class_name=class_name)
                 if new_java:
                     retry_java = new_java
                 else:

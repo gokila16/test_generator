@@ -257,6 +257,38 @@ def _build_inventory_method_allowlist(method, class_inventory):
     return allowed
 
 
+def validate_imports(java_code: str,
+                     source_file_imports: list,
+                     class_inventory: dict) -> list:
+    """
+    Validates every import in the generated test against known-good sources.
+    Returns a list of violation strings for hallucinated imports.
+
+    An import is valid if ANY of these are true:
+    - Starts with java. or javax.          (stdlib — trusted unconditionally)
+    - Starts with org.junit                (JUnit 5 — trusted unconditionally)
+    - Appears verbatim in source_file_imports
+    - Its fully qualified class name exists as a key in class_inventory
+
+    Everything else is a hallucinated import.
+    Violation string format: "HALLUCINATED_IMPORT::fully.qualified.ClassName"
+    """
+    violations = []
+    found_imports = re.findall(r'^\s*import\s+([\w.]+)\s*;', java_code, re.MULTILINE)
+    for fqn in found_imports:
+        if fqn.startswith('java.') or fqn.startswith('javax.'):
+            continue
+        if fqn.startswith('org.junit.jupiter') or fqn.startswith('org.junit.platform'):
+            continue
+        import_stmt = f"import {fqn};"
+        if any(import_stmt in sfi for sfi in source_file_imports):
+            continue
+        if class_inventory and fqn in class_inventory:
+            continue
+        violations.append(f"HALLUCINATED_IMPORT::{fqn}")
+    return violations
+
+
 def check_against_allowlist(java_code, method, class_inventory=None):
     """
     Checks that the generated test only calls methods that exist in
