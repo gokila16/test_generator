@@ -1,6 +1,6 @@
 import re
 import config
-from src.behavioral_analyzer import extract_behavioral_constraints
+from src.behavioral_analyzer import extract_behavioral_constraints, extract_branches
 from src.resource_scanner import is_file_dependent, scan_test_resources
 
 
@@ -133,13 +133,26 @@ def _format_class_inventory_section(method, class_inventory):
         class_name    = entry.get('class_name', full_name.split('.')[-1])
         is_abstract   = entry.get('is_abstract', False)
         is_interface  = entry.get('is_interface', False)
+        is_final      = entry.get('is_final', False)
         constructors  = entry.get('constructors', [])
         factory_meths = entry.get('factory_methods', [])
         pub_methods   = entry.get('public_methods', [])
         subclasses    = entry.get('concrete_subclasses', [])
 
-        kind = "interface" if is_interface else ("abstract class" if is_abstract else "class")
+        if is_interface:
+            kind = "interface"
+        elif is_abstract:
+            kind = "abstract class"
+        elif is_final:
+            kind = "final class"
+        else:
+            kind = "class"
         lines.append(f"  {class_name} [{kind}]")
+        if is_final:
+            lines.append(
+                f"    !! FINAL — cannot be subclassed, extended, or anonymously instantiated "
+                f"with {{ }}. Do not write new {class_name}() {{ ... }}."
+            )
 
         # Public/protected constructors
         public_ctors = [c for c in constructors if c.get('visibility') in ('public', 'protected')]
@@ -192,9 +205,34 @@ def _format_class_inventory_section(method, class_inventory):
 _SKIP_STRATEGIES = {'skip', 'unknown', 'unresolvable_abstract', 'private_constructor'}
 
 
+def _infer_semantic_annotation(ptype: str, construction: str, strategy: str) -> str:
+    """
+    Returns a brief plain-English comment explaining what a constructed value
+    represents.  Used to anchor oracle derivation without asking the LLM to
+    trace through multiple layers of construction logic.
+    """
+    c = construction.lower()
+    t = ptype
+
+    if strategy == 'resource':
+        return f"// a valid {t} backed by a real test resource file"
+    if 'load' in c or 'parse' in c or 'open' in c:
+        return f"// a fully loaded/parsed {t} instance"
+    if re.search(r'new\s+' + re.escape(t) + r'\s*\(\s*\)', c):
+        return f"// a default-constructed (empty) {t} instance"
+    if 'new ' + t.lower() in c:
+        return f"// a newly constructed {t} instance"
+    if 'getresourceasstream' in c or 'getresource' in c:
+        return f"// an {t} backed by a real test resource file"
+    return f"// a {t} instance"
+
+
 def _format_construction_section(dep_chain):
     """
     Formats the HOW TO CONSTRUCT EACH INPUT section from a dep_chain entry.
+    Each entry is annotated with a plain-English comment describing what the
+    constructed value represents, so the LLM can derive oracle values without
+    re-tracing the construction logic.
     Skips params with unresolvable strategies and notes them as TODOs.
     Returns empty string if dep_chain is None or has no params/receiver.
     """
@@ -203,18 +241,21 @@ def _format_construction_section(dep_chain):
 
     lines = [
         "## HOW TO CONSTRUCT EACH INPUT",
-        "Use these exact construction statements in your plan. Do not invent alternatives.",
+        "Use these exact statements verbatim. Do not invent alternatives.",
         "",
     ]
 
     receiver = dep_chain.get('receiver')
     if receiver:
         if receiver.get('strategy') in _SKIP_STRATEGIES:
-            lines.append("Receiver (declaring class instance):")
+            lines.append("Receiver (instance of the class under test):")
             lines.append("  // TODO: receiver could not be resolved — do not guess construction code.")
         else:
-            lines.append("Receiver (declaring class instance):")
-            lines.append(f"  {receiver.get('construction', '')}")
+            construction = receiver.get('construction', '')
+            rtype = dep_chain.get('class_name', '')
+            annotation = _infer_semantic_annotation(rtype, construction, receiver.get('strategy', ''))
+            lines.append(f"Receiver (instance of the class under test):  {annotation}")
+            lines.append(f"  {construction}")
         lines.append("")
 
     params = dep_chain.get('params') or []
@@ -222,16 +263,103 @@ def _format_construction_section(dep_chain):
         strategy = p.get('strategy', '')
         if strategy == 'skip':
             continue  # output-type param — exclude entirely
-        lines.append(f"Parameter {i}: {p.get('type', '')} {p.get('name', '')}")
+        ptype = p.get('type', '')
+        pname = p.get('name', '')
+        lines.append(f"Parameter {i}: {ptype} {pname}")
         if strategy in _SKIP_STRATEGIES:
             lines.append(f"  // TODO: parameter could not be resolved — do not invent construction code for it.")
         else:
-            lines.append(f"  Strategy: {strategy}")
-            lines.append(f"  Construction: {p.get('construction', '')}")
+            construction = p.get('construction', '')
+            annotation = _infer_semantic_annotation(ptype, construction, strategy)
+            lines.append(f"  {annotation}")
+            lines.append(f"  {construction}")
         lines.append("")
 
     if len(lines) <= 3:
         return ""  # nothing useful was added
+    return "\n".join(lines)
+
+
+def _format_pre_computed_facts(method, testable_slices=None):
+    """
+    Combines statically-extracted behavioral facts into a single section that
+    the LLM reads as pre-verified ground truth — not as something to derive.
+
+    Covers:
+      - Branch structure (if-condition → taken/not-taken outcomes)
+      - Literal return values per conditional path
+      - Throw conditions with their guard predicates
+      - Ternary return paths from method slicing
+
+    Presenting these as facts rather than asking the LLM to trace code is the
+    primary defence against oracle hallucination.
+    """
+    body = method.get('body', '')
+    if not body:
+        return ""
+
+    behavioral = extract_behavioral_constraints(body)
+    branches   = extract_branches(body)
+
+    lines = [
+        "## PRE-COMPUTED BEHAVIORAL FACTS",
+        "The following are read directly from the source — treat them as ground truth.",
+        "Each fact corresponds to a specific execution path. Use these exact values as the",
+        "expected output in your assertions — do NOT re-derive or guess different values.",
+        "Your job: pick the INPUT that forces each path, then assert the outcome listed here.",
+        "",
+    ]
+
+    # Branch structure
+    if branches:
+        lines.append("Branch map (statically extracted):")
+        for n, b in enumerate(branches, 1):
+            taken     = b['taken']
+            not_taken = b['not_taken']
+            if not_taken:
+                lines.append(f"  Branch {n}: if ({b['condition']}) -> {taken} | else -> {not_taken}")
+            else:
+                lines.append(f"  Branch {n}: if ({b['condition']}) -> {taken}")
+        lines.append("")
+
+    # Throw contracts
+    throw_lines = []
+    for t in behavioral.get('throws', []):
+        if t['condition'] is not None:
+            throw_lines.append(
+                f"  throws {t['exception']} when ({t['condition']})"
+            )
+        else:
+            throw_lines.append(f"  throws {t['exception']} (unconditionally or guard not detected)")
+    if throw_lines:
+        lines.append("Throw contracts:")
+        lines.extend(throw_lines)
+        lines.append("")
+
+    # Literal return values
+    return_lines = []
+    for r in behavioral.get('returns', []):
+        return_lines.append(f"  returns {r['value']}  (on the path: `{r['context']}`)")
+    if return_lines:
+        lines.append("Literal return values:")
+        lines.extend(return_lines)
+        lines.append("")
+
+    # Ternary paths from method slicing
+    ternary_slices = [
+        s for s in (testable_slices or [])
+        if s.get('slice_type') == 'RETURN_SLICE'
+        and ('is true' in s.get('entry_condition', '')
+             or 'is false' in s.get('entry_condition', ''))
+    ]
+    if ternary_slices:
+        lines.append("Ternary return paths (from method slicing — one test required per line):")
+        for s in ternary_slices:
+            lines.append(f"  When {s['entry_condition']}: {s['expected_observable']}")
+        lines.append("")
+
+    if len(lines) <= 4:
+        return ""  # nothing useful extracted
     return "\n".join(lines)
 
 
@@ -309,299 +437,236 @@ def build_planning_prompt(method, dep_chain=None, caller_snippets=None, class_in
     """
     Step 1 of 2: asks the LLM to produce a structured test plan (no code).
     The plan includes the exact imports needed and the exact method calls per test.
-    """
-    import_section = _format_imports(method)
-    dep_section = _format_dependency_signatures(method)
-    resource_block = _format_resource_block(method)
 
-    prompt = f"""You are an expert Java software engineer. Your task is to produce a structured TEST PLAN for a JUnit 5 test class. Do NOT write any Java code — output only the plan as described below.
+    Section order is intentional — grounding data (real usage, concrete
+    construction, pre-computed facts) comes before any task instructions so the
+    model is anchored to real values before it starts reasoning.
+    """
+    class_name = method['class_name']
+
+    # ---- Build every context section up-front ----
+    import_section     = _format_imports(method)
+    dep_section        = _format_dependency_signatures(method)
+    resource_block     = _format_resource_block(method)
+    inventory_section  = _format_class_inventory_section(method, class_inventory or {})
+    construction_section = _format_construction_section(dep_chain)
+    abstract_hint      = _format_abstract_receiver_hint(method, dep_chain, class_inventory or {})
+    caller_section     = _format_caller_snippets(caller_snippets)
+    pre_computed       = _format_pre_computed_facts(method, testable_slices)
+
+    # ---- Persona + method ----
+    prompt = f"""You are a senior SDET. You read the implementation to understand EVERY path
+the method can take — every branch, guard, early return, exception, and edge case.
+Then you design tests that EXERCISE each path from the outside: you craft an input
+that forces the method down a specific path, and you assert the known outcome for
+that path.
+
+=== HOW YOU THINK ===
+1. Read the implementation to build a complete map of all paths:
+   - Which conditions lead to which return values or exceptions?
+   - What inputs trigger each guard clause or early return?
+   - What are the boundary conditions where behavior changes?
+2. For EACH path, determine:
+   - What concrete input forces the method down THIS path?
+   - What is the KNOWN outcome (return value, exception, state change) for this path?
+   - Use PRE-COMPUTED BEHAVIORAL FACTS as ground truth for these outcomes.
+3. Write a test for each path: construct the input, call the method ONCE, assert
+   the known outcome. The expected value is a HARDCODED LITERAL in the test — you
+   already know what it should be from step 2.
+4. The test code itself must NEVER contain the same branching logic as the method.
+   You are not re-running the method's logic — you are verifying its result for a
+   specific input where you already know the answer.
+
+=== THE KEY DISTINCTION ===
+KNOWING all paths (good) vs. COPYING the logic (bad):
+- GOOD: "I see that if (x == null) the method throws IllegalArgumentException.
+         So my test passes null and does assertThrows(IllegalArgumentException.class, ...)."
+- BAD:  "My test checks if (x == null) and then expects an exception, else expects a value."
+         This mirrors the production code — if the production code is wrong, the test is
+         also wrong in the same way. It catches nothing.
+
+=== WHAT MAKES A BAD TEST (DO NOT WRITE THESE) ===
+- Re-implementing the method's if/else/switch in the test to compute expected values.
+- assertNotNull(x) as the only assertion — passes even if x is completely wrong.
+- assertTrue(true), empty test body, or no assertion at all.
+- Importing classes that are never referenced in any test method.
+- "Smoke tests" that just call the method without verifying the return value.
+
+Do NOT write any Java code. Output only the structured plan described at the end.
 
 === METHOD UNDER TEST ===
 Signature: {method.get('signature', '')}
 """
 
     if method.get('javadoc'):
-        prompt += f"Javadoc: {method['javadoc']}\n"
+        prompt += f"Javadoc:\n{method['javadoc']}\n"
 
     prompt += f"""
-Implementation:
+Implementation (read to understand all paths — do NOT copy this logic into your tests):
 {method.get('body', '')}
 
 """
 
-    if import_section:
-        prompt += import_section + "\n\n"
+    # ---- 1. Real usage examples — FIRST (best grounding) ----
+    if caller_section:
+        prompt += caller_section + "\n\n"
 
+    # ---- 2. Concrete construction — SECOND ----
+    if construction_section:
+        prompt += construction_section + "\n\n"
+
+    if abstract_hint:
+        prompt += abstract_hint + "\n\n"
+
+    # ---- 3. What methods/classes exist ----
     if dep_section:
         prompt += dep_section + "\n\n"
 
-    inventory_section = _format_class_inventory_section(method, class_inventory or {})
     if inventory_section:
         prompt += inventory_section + "\n\n"
 
     if resource_block:
         prompt += resource_block + "\n\n"
 
-    construction_section = _format_construction_section(dep_chain)
-    if construction_section:
-        prompt += construction_section + "\n\n"
+    if import_section:
+        prompt += import_section + "\n\n"
 
-    abstract_hint = _format_abstract_receiver_hint(method, dep_chain, class_inventory or {})
-    if abstract_hint:
-        prompt += abstract_hint + "\n\n"
+    # ---- 4. Pre-computed facts — read these, don't re-derive ----
+    if pre_computed:
+        prompt += pre_computed + "\n\n"
 
-    caller_section = _format_caller_snippets(caller_snippets)
-    if caller_section:
-        prompt += caller_section + "\n\n"
+    # ---- 5. Task — focused, compact ----
+    prompt += f"""=== YOUR TASK ===
+Answer the three questions below, then write the test plan.
 
-    behavioral = extract_behavioral_constraints(method.get('body', ''))
-    behavioral_lines = []
-    for t in behavioral.get('throws', []):
-        if t['condition'] is not None:
-            behavioral_lines.append(
-                f"- This method throws {t['exception']} only when "
-                f"({t['condition']}). "
-                f"Do not assert assertThrows({t['exception']}.class) for any other input."
-            )
-    for r in behavioral.get('returns', []):
-        behavioral_lines.append(
-            f"- On the branch where `{r['context']}`, this method returns "
-            f"{r['value']}. Use this exact value in your assertEquals assertion."
-        )
-    if behavioral_lines:
-        prompt += "## BEHAVIORAL CONSTRAINTS\n"
-        prompt += "The following behaviors are directly readable from the implementation.\n"
-        prompt += "Use them as precise contracts — do not guess or infer different values.\n\n"
-        prompt += "\n".join(behavioral_lines) + "\n\n"
+QUESTION 1 — WHAT DOES THIS METHOD DO?
+State the method's purpose in one sentence: what it computes, validates, or transforms,
+and what a caller expects to get back.
 
-    ternary_slices = [
-        s for s in (testable_slices or [])
-        if s.get('slice_type') == 'RETURN_SLICE'
-        and ('is true' in s.get('entry_condition', '')
-             or 'is false' in s.get('entry_condition', ''))
-    ]
-    if ternary_slices:
-        prompt += "## TERNARY RETURN PATHS\n"
-        prompt += (
-            "The following ternary branches were detected statically. Each is a\n"
-            "distinct return path that requires its own test method.\n\n"
-        )
-        for s in ternary_slices:
-            prompt += f"- When {s['entry_condition']}: {s['expected_observable']}\n"
-        prompt += (
-            "\nThese are not guesses — they are read directly from the source.\n"
-            "Treat each line as a BEHAVIORAL CONSTRAINT with the same authority\n"
-            "as the THROW conditions above.\n\n"
-        )
+QUESTION 2 — PATH-BY-PATH TEST TABLE
+List EVERY distinct execution path through the method (every if/else branch, every
+guard clause, every catch block, every early return, every loop-skip scenario).
+For EACH path, fill in this line:
+  Path N: <input that forces this path> → expected: <exact return value, exception type, or state change>
+Rules:
+  - Use PRE-COMPUTED BEHAVIORAL FACTS as ground truth for return values and exceptions.
+  - The expected value must be a CONCRETE LITERAL or specific exception type.
+  - If the method returns an object, state which GETTER/FIELD to check and its expected value
+    (e.g., result.getSize() == 0, result.getName().equals("default")).
+    "returns an object" or "returns non-null" is NOT a testable outcome.
+  - Every path needs an input that reaches it. Use HOW TO CONSTRUCT and REAL USAGE EXAMPLES
+    to find realistic inputs. If no input can reach a path, mark it "unreachable" and skip.
 
-    prompt += """=== STEP 0: ADVERSARIAL ANALYSIS (complete before anything else) ===
-You are not trying to demonstrate that this method works.
-You are trying to find inputs that make it produce wrong results,
-throw unexpected exceptions, or silently corrupt state.
+QUESTION 3 — REGRESSION SCENARIOS
+For each parameter, name the one input most likely to expose a bug if a developer
+carelessly modifies this method (null, empty, negative, max-value, partially-initialised).
+State what SHOULD happen: throw (which exception?), return a default, or corrupt state.
+Only propose tests for inputs the method actually receives — no invented params.
 
-Answer all four questions before proceeding:
+Then write the test plan:
 
-1. TRUST BOUNDARIES
-   Which parameters does this method use without validating first?
-   (No null check, no range check, no type check before use.)
-   These are your highest-priority test targets.
-
-2. HIDDEN ASSUMPTIONS
-   What must be true about the object's internal state before this
-   method is called for it to behave correctly?
-   What happens if those preconditions are violated?
-
-3. BOUNDARY VALUES
-   For every parameter, state the boundary values you will test:
-   - numeric: 0, -1, 1, Integer.MAX_VALUE, Integer.MIN_VALUE
-   - String: null, "", " ", very long string
-   - Collection/array: null, empty, single element, large size
-   - Object: null, default-constructed, partially initialized
-   State explicitly which boundary is most likely to expose a bug
-   and why.
-
-4. MUTATION RISK
-   Does this method modify any of its input parameters or shared
-   state beyond what the return value suggests?
-   If yes, name the mutated target and its expected state after
-   the call — this becomes an assertion requirement.
-
-Format your answers as:
-TRUST BOUNDARIES: <list each unvalidated parameter>
-HIDDEN ASSUMPTIONS: <list each precondition>
-BOUNDARY VALUES: <param name> → <values to test> → <most dangerous>
-MUTATION RISK: <field or param> → <state after call>
-
-=== STEP 0.5: INPUT DOMAIN PARTITIONING ===
-For each parameter identified in STEP 0, define its equivalence
-partitions. A partition is a set of inputs the method treats
-identically — one representative per partition is sufficient.
-
-Format:
-  Parameter <name>:
-    Valid partition:    <representative value> — <why it is valid>
-    Invalid partition:  <representative value> — <why it is invalid>
-    Boundary partition: <representative value> — <the edge case>
-
-Choose the most dangerous representative for each partition —
-the value most likely to expose a bug if the method mishandles it.
-
-These partitions become test methods IN ADDITION to the
-slice-derived tests. Every invalid partition that is reachable
-via public API must have a corresponding test method.
-
-"""
-
-    prompt += f"""=== STEP 1: UNDERSTAND THE METHOD (mandatory — complete before writing any test) ===
-You are acting as a senior SDET who has just been handed this method to test.
-Before planning a single test case, read the implementation above and answer:
-
-1. PURPOSE
-   What does this method DO? State the computation, transformation, or validation it performs
-   in one plain-English sentence. Do not describe the code structure — describe the INTENT.
-
-2. INPUT → OUTPUT MAP
-   For every distinct execution path, state the EXACT result. Use values directly visible in
-   the implementation. Format: "When [input condition] → returns [exact value] / throws [ExceptionType]"
-   - Be specific: "returns the parsed document with N pages" not "returns an object"
-   - If it returns a boolean, state which condition produces true vs false
-   - If it returns a string or number, quote the exact literal from the source
-   - If it returns an object, name which fields/properties are populated and with what
-
-3. ASSERTION DERIVATION
-   Given the exact construction statements in HOW TO CONSTRUCT EACH INPUT above, trace through
-   the method body step by step and state what value the method will return (or throw) for each
-   input configuration. This is the value you MUST use in your assertEquals/assertThrows.
-   Format: "With [constructed input description] → assertEquals([exact expected value], result)"
-   or      "With [constructed input description] → assertThrows([ExceptionType].class, ...)"
-   Do NOT write "assertNotNull(result)" — derive the actual expected value.
-
-=== STEP 2: BRANCH ANALYSIS (complete after Step 1) ===
-Enumerate every branch in the implementation. A branch is any point where execution takes
-different paths: if/else, switch, ternary, try/catch, loops that may not execute, early returns.
-
-For each branch write one line:
-  Branch N: <condition or construct> → <taken path result> | <not-taken path result>
-
-Every branch you list MUST have at least one test method mapped to it in TEST METHODS below.
-Every test method MUST state which branch(es) it covers in a "Covers branches:" field.
-
-=== HARD RULES ===
---- Method calling ---
-1a. For classes in DEPENDENCY SIGNATURES: ONLY call the methods listed verbatim there. No other methods on those classes.
-1b. For classes in AVAILABLE PROJECT CLASSES (not in DEPENDENCY SIGNATURES): you may call any method shown in their "public methods" list. Do not invent method names not listed there.
-1c. For any other class: do not call instance or static methods on it at all.
-2. Write each planned method call as ClassName.methodName(ParamType1, ParamType2) so it is unambiguous.
-
---- Imports ---
-3. For PLANNED IMPORTS, ONLY list imports that appear in SOURCE FILE IMPORTS, plus JUnit 5 (org.junit.jupiter.api.*) and Java SE (java.*) classes. Do NOT invent or add any other import. Always include java.net.URISyntaxException when using getResource(). Never include java.net.URL.
-4. Do NOT plan to use Mockito or any mocking framework.
-
---- Object construction ---
-5. Do NOT plan to access private fields or methods.
-6. NEVER plan to pass bare null to an overloaded method — always plan to cast it (e.g. (File) null).
-7. You MUST use the exact construction statements provided in HOW TO CONSTRUCT EACH INPUT. Do not invent, simplify, or replace them. If a parameter has no construction provided, write a TODO comment for it and do not guess.
-8. NEVER use null as a substitute for a required object. Null is only acceptable when testing explicit null-handling behaviour documented by the method. If an object cannot be constructed, write a TODO comment — do not substitute null.
-9. The class under test is `{method['class_name']}`. NEVER substitute a different class as the receiver. If it is abstract, use a concrete subclass from RECEIVER CONSTRUCTION NOTE or AVAILABLE PROJECT CLASSES, but declare the variable as type `{method['class_name']}`. If it cannot be constructed at all, omit the test entirely.
-
---- Test design ---
-10. Never plan chained method calls. Every method return value must be assigned to a named variable before calling methods on it.
-11. Every branch listed in STEP 2 BRANCH ANALYSIS must be covered by at least one test method. Do not omit any branch.
-12. Assertions MUST be derived from your STEP 1 ASSERTION DERIVATION above — not guessed.
-    - assertEquals: use the EXACT value you traced in Step 1 for the given input
-    - assertThrows: only when Step 1 shows the method throws for that specific input
-    - assertTrue/assertFalse: only for boolean returns — state which is correct from Step 1
-    - For object returns: call getter/accessor methods on the result to verify specific field values, not just assertNotNull
-    - assertNotNull alone is NEVER acceptable — always pair it with at least one assertion on content or state
-    - Do NOT write an assertion you cannot justify from reading the method body
-
---- Files ---
-13. Never use File.createTempFile() for happy path tests. Always use a real resource file from AVAILABLE TEST RESOURCE FILES.
-14. Never hardcode placeholder file paths. Use getClass().getClassLoader().getResource("FILENAME").toURI() with a filename from AVAILABLE TEST RESOURCE FILES.
-15. If AVAILABLE TEST RESOURCE FILES lists any files, at least one happy-path test MUST load a real resource file from that list.
-
---- Output hygiene ---
-16. NEVER write assertTrue(true) or leave a @Test method body empty. If a test scenario cannot be implemented, omit that test method entirely.
-17. The file must contain exactly one TOP-LEVEL type: the test class. Simple helper types (e.g. a small data holder needed only for this test) may be declared as `static` nested classes INSIDE the test class body. Do NOT define additional top-level classes, interfaces, or enums. Do NOT give any nested class the same name as a production class.
-
---- Ternary paths ---
-18. For every line in TERNARY RETURN PATHS, there must be exactly one test method that exercises that branch. The assertion must use the expected_observable from that line verbatim. Do not merge the true-branch and false-branch tests into one method.
-
---- Adversarial tests ---
-19. Every TRUST BOUNDARY identified in STEP 0 must have at least
-    one test that passes that parameter unvalidated (e.g. null,
-    negative, empty). If the method does not guard it, the test
-    must assert the resulting exception or corrupted state —
-    not assertDoesNotThrow.
-20. Every BOUNDARY VALUE identified in STEP 0 must appear as the
-    input in at least one test method. Do not test only the
-    happy-path representative. The boundary representative is
-    often more valuable than the valid one.
+=== CRITICAL RULES ===
+1. ONLY call methods listed in DEPENDENCY SIGNATURES or AVAILABLE PROJECT CLASSES.
+   For any other class — do not call any instance or static method on it at all.
+2. Use the EXACT construction statements from HOW TO CONSTRUCT EACH INPUT verbatim.
+   Do not simplify, replace, or invent alternatives. If no construction is provided, write
+   a TODO comment and omit that test.
+3. Every assertion must use a HARDCODED expected value from PRE-COMPUTED BEHAVIORAL FACTS
+   or your QUESTION 2 table. The expected value goes directly into the assertion — you must
+   NOT compute it by re-running the production logic in the test.
+   Acceptable: assertEquals("expected_string", result)
+   Acceptable: assertThrows(IOException.class, () -> method(null))
+   Acceptable: assertTrue(result.isEmpty())
+   FORBIDDEN: assertNotNull(x) as sole assertion, assertTrue(true), empty test body.
+4. Do NOT use Mockito or any mocking framework. Do NOT create anonymous subclasses
+   (new ClassName() {{ ... }} syntax is forbidden for all classes).
+5. The class under test is `{class_name}`. Never substitute a different class as receiver.
+   If it is abstract, use a listed concrete subclass but declare the variable as `{class_name}`.
 
 === REQUIRED OUTPUT FORMAT ===
-Output exactly the following structure. Fill in each section — do not skip any.
+Output exactly this structure. Do not skip any section.
 
 METHOD SEMANTICS:
-Purpose: <one sentence stating what the method computes, transforms, or validates>
-Input → Output map:
-  - When <condition>: returns <exact value> / throws <ExceptionType>
-  - When <condition>: returns <exact value> / throws <ExceptionType>
-  (list every distinct path)
-Assertion derivation:
-  - With <constructed input description>: assertEquals(<exact expected value>, result)
-  - With <constructed input description>: assertThrows(<ExceptionType>.class, ...)
-  (one line per test scenario — this drives every assertion in TEST METHODS)
+Purpose: <one sentence>
+Path-by-path oracle (from QUESTION 2 — one line per path, these are the GROUND TRUTH):
+  - Path N: <input description> → <exact expected outcome>
+Assertion for each test (EVERY test must have one — no exceptions):
+  - Test <name>: assertEquals(<hardcoded expected>, result)
+  - Test <name>: assertThrows(<ExceptionType>.class, ...)
+  - Test <name>: result = method(...); assertEquals(<expected>, result.getField())
+  FORBIDDEN: assertNotNull alone, assertTrue(true), empty body, no assertion
 
-BRANCH ANALYSIS:
-Branch 1: <condition> → <taken path> | <not-taken path>
-Branch 2: ...
-(list every branch)
+PATH ANALYSIS:
+Path 1: <condition> → <outcome when taken> | <outcome when not taken>
+Path 2: ...
+(list every path through the method; mark which come from PRE-COMPUTED BEHAVIORAL FACTS)
 
-PLANNED IMPORTS:
-- <exact import statement>
-- <exact import statement>
+PLANNED IMPORTS (only what YOUR test methods actually need — not everything from SOURCE FILE IMPORTS):
+- <exact import statement from SOURCE FILE IMPORTS or JUnit 5 / Java SE only>
 ...
 
-TEST METHODS:
-1. <camelCase test method name>
-   Scenario: <one sentence describing what this test verifies>
-   Covers branches: <Branch N, Branch M, ...>
-   Setup: <objects to instantiate and how, or "none">
-   Method calls: <ClassName.methodName(ParamType), ...>
-   Assertions: <exact assertion with the value derived in METHOD SEMANTICS above>
+TEST METHODS (one test per path — every path must be tested):
+1. <camelCaseTestName>
+   Tests path: <Path N — which execution path this exercises>
+   Regression caught: <what bug this catches — e.g. "fails if null guard is removed">
+   Setup: <verbatim construction from HOW TO CONSTRUCT, or "none">
+   Input: <what specific value/state forces the method down this path>
+   Method call: <exact call — receiver.methodName(args)>
+   Expected output: <hardcoded value from Path-by-path oracle>
+   Assertion: <assertEquals/assertThrows/assertTrue with specific expected value — NEVER assertNotNull alone>
 
-2. <camelCase test method name>
-   Scenario: ...
-   Covers branches: ...
-   Setup: ...
-   Method calls: ...
-   Assertions: ...
+2. <camelCaseTestName>
+   ...
 
-(one test method per branch minimum; consolidate only when two branches are exercised by identical setup)
+(one test per path from QUESTION 2; additional tests for regressions from QUESTION 3)
 
-BRANCH COVERAGE SUMMARY:
-- Branch 1: covered by test <name>
-- Branch 2: covered by test <name>
-...
-(every branch from BRANCH ANALYSIS must appear here)
+PATH COVERAGE SUMMARY:
+- Path 1: covered by test <name>
+- Path 2: covered by test <name>
+(every path must appear here — if a path has no test, explain why)
 
 Output the plan now:"""
 
     return prompt
 
 
-def build_generation_from_plan_prompt(method, plan):
+def build_generation_from_plan_prompt(method, plan, dep_chain=None):
     """
     Step 2 of 2: asks the LLM to generate the test class by implementing the plan exactly.
     Imports are restricted to exactly what was listed in the plan.
+    dep_chain is passed through so construction statements are available as a
+    direct reference — the model does not have to re-read them from the plan text.
     """
     test_class_name = f"{method['class_name']}_{method['method_name']}_Test"
     package = '.'.join(method['full_name'].split('.')[:-2])
     resource_block = _format_resource_block(method)
+    construction_section = _format_construction_section(dep_chain)
 
-    prompt = f"""You are an expert Java software engineer acting as a senior SDET. Implement the following test plan as a complete, compilable JUnit 5 test class.
+    prompt = f"""You are a senior SDET implementing a test plan as JUnit 5 Java code.
+Each test targets a specific execution path through the method. The plan already
+specifies the input, the path it exercises, and the expected output. Your job is to
+translate each test into compilable code — not to re-derive or second-guess the plan.
 
-Before writing any @Test method, find the METHOD SEMANTICS section in the plan above. Copy the exact value from "Assertion derivation" for that test's input. That value is your assertion. Do not derive it again.
+=== YOUR WORKFLOW FOR EACH @Test METHOD ===
+1. Find the test in the plan's TEST METHODS section.
+2. Read its "Input" and "Setup" fields — copy the construction code from
+   HOW TO CONSTRUCT (or the plan's Setup field) VERBATIM.
+3. Write the method call exactly as specified in "Method call".
+4. Read the "Expected output" and "Assertion" fields.
+5. Write that assertion with the HARDCODED expected value from the plan.
+   Do NOT look at the production implementation to compute the expected value.
+
+=== QUALITY GATE — EVERY @Test METHOD MUST PASS THIS ===
+- Contains at least one assertEquals, assertThrows, or assertTrue/assertFalse
+  with a SPECIFIC hardcoded expected value.
+- The expected value is a LITERAL in the test code, NOT computed by re-running
+  the method's branching logic. Your test must NOT contain the same if/else/switch
+  structure as the method under test.
+- assertNotNull(x) alone is never enough. Always follow with a value/state assertion.
+- If you cannot write a meaningful assertion, OMIT that test method entirely.
+  An always-passing test is worse than no test.
+- Only import classes you actually reference in a test method body.
+
 === TEST PLAN ===
 {plan}
 
@@ -610,45 +675,36 @@ Signature: {method.get('signature', '')}
 
 """
 
+    # Re-include construction section so the model has it as a direct reference
+    # without having to extract it from the plan text.
+    if construction_section:
+        prompt += construction_section + "\n\n"
+
     if resource_block:
         prompt += resource_block + "\n\n"
 
-    prompt += f"""=== HARD RULES ===
---- Structure ---
-1. Test class name MUST be exactly: {test_class_name}
+    prompt += f"""=== RULES ===
+1. Class name MUST be exactly: {test_class_name}
 2. Package MUST be exactly: {package}
-3. Implement EXACTLY the test methods listed in the plan — same names, same method calls, same assertions. Do NOT add, remove, or rename any test method.
-4. ONLY add import statements listed verbatim in the PLANNED IMPORTS section of the plan. Do NOT add any import not in that list.
-5. The file must contain exactly one TOP-LEVEL type: `{test_class_name}`. Simple helper types (e.g. a small data holder needed only for this test) may be declared as `static` nested classes INSIDE `{test_class_name}`. Do NOT define additional top-level classes, interfaces, or enums. Do NOT give any nested class the same name as a production class.
-6. The class under test is `{method['class_name']}`. It MUST appear in the test code as a type, constructor call, or static reference. If the plan uses a concrete subclass, declare the variable as type `{method['class_name']}` (e.g. `{method['class_name']} obj = new ConcreteSubclass(...)`).
-
---- Implementation ---
-7. Use the exact construction code from the plan setup section verbatim. Do not rewrite, simplify, or replace it.
-8. Never chain method calls. Always assign return values to named variables before calling methods on them.
-9. NEVER pass bare null to an overloaded method — cast it as specified in the plan.
-10. Do NOT access private fields or methods.
-11. Do NOT use Mockito or any mocking framework.
-12. If the method throws a checked exception, declare `throws <ExceptionType>` on the test method rather than wrapping in try-catch, unless the plan uses assertThrows.
-13. Never pass a raw InputStream or FileInputStream where a wrapper type is required.
-
---- Assertions ---
-14. Every assertion MUST use the exact expected value from METHOD SEMANTICS in the plan.
-    - assertEquals: use the exact value stated in "Assertion derivation" for this test's input
-    - For object returns: call getter/accessor methods on the result to verify specific field values
-    - assertNotNull alone is NEVER sufficient — always follow it with at least one content/state assertion
-    - assertThrows: only when METHOD SEMANTICS explicitly shows the method throws for that input
-    - Do NOT write an assertion you cannot justify from the plan's METHOD SEMANTICS section
-15. Never write assertThrows(IOException.class, () -> method(null)). Null dereferences throw NullPointerException, not checked exceptions.
-16. NEVER write assertTrue(true) or leave a @Test method body empty. If a test scenario cannot be implemented, omit that test method entirely.
-
---- Files ---
-17. Never construct file content programmatically for happy path tests. Use the resource files specified in the plan.
-18. Never hardcode placeholder file paths. Use getClass().getClassLoader().getResource() as specified in the plan.
-19. If AVAILABLE TEST RESOURCE FILES is present, every file-input test MUST use getClass().getClassLoader().getResource("FILENAME").toURI() with a filename from that list.
+3. Implement EXACTLY the test methods in the plan — same names, same method calls, same assertions.
+4. ONLY add imports listed in PLANNED IMPORTS. Remove any import you don't use in a test body.
+5. Use the exact construction code from the plan Setup field (or HOW TO CONSTRUCT above) verbatim.
+6. Never chain method calls. Assign every return value to a named variable first.
+7. NEVER pass bare null to an overloaded method — cast it (e.g. (File) null).
+8. Do NOT use Mockito or any mocking framework.
+9. Do NOT create anonymous subclasses (new ClassName() {{ ... }} syntax is forbidden).
+10. Every assertion must use the HARDCODED expected value from the plan's "Expected output" field.
+    Do NOT re-derive expected values by re-implementing the production code's branching logic.
+11. assertNotNull alone is never sufficient — always follow it with assertEquals or similar.
+12. NEVER write assertTrue(true) or leave a @Test body empty. Omit the test entirely instead.
+13. One top-level type only: `{test_class_name}`. Helper types must be static nested classes
+    inside it and must not share a name with any production class.
+14. The class under test is `{method['class_name']}`. It MUST appear as a type, constructor call,
+    or static reference in the code body — not just in an import.
+15. If the method throws a checked exception, declare `throws <ExceptionType>` on the test method.
 
 === OUTPUT FORMAT ===
-Output ONLY the raw Java source code. No explanations, no markdown fences.
-The output must start with the package declaration.
+Output ONLY the raw Java source code starting with the package declaration. No explanations, no markdown fences.
 
 Generate the test class now:
 ```java
@@ -764,8 +820,11 @@ def build_retry_prompt(error_message, failing_test, method,
 6. Do NOT use internal implementation classes — only use public API types needed to call the method and verify its return value.
 7. NEVER pass bare null to any overloaded method. Always cast: `(File) null`, `(InputStream) null`, `(String) null`.
 8. Do NOT access private fields or methods of any class.
+8a. NEVER create anonymous subclasses or anonymous implementations using new ClassName() {{ ... }} syntax. This is forbidden for ALL classes. If you cannot construct an object through its public constructor or factory method, write a TODO comment and omit that test entirely.
 9. Never chain method calls. Always assign return values to named variables before calling methods on them.
 10. If a specific assertion cannot be written due to access constraints, omit that test method entirely. NEVER write assertTrue(true) or leave a test body empty — a test that always passes regardless of production code is worse than no test.
+11. assertNotNull alone is NEVER sufficient — always follow it with assertEquals, assertTrue/assertFalse, or another assertion that checks a specific value or state.
+12. NEVER reproduce the production method's logic in the test. Do not re-implement the same if/else/switch/loop structure. The test must check against a KNOWN expected value, not re-derive it.
 11. The file must contain exactly one TOP-LEVEL type: `{test_class_name}`. Helper types may be `static` nested classes INSIDE `{test_class_name}` but must not share a name with any production class. Do NOT add extra top-level classes.
 
 === ERROR DIAGNOSIS GUIDE ===
@@ -975,6 +1034,7 @@ def build_allowlist_violation_prompt(violations, generated_test, method,
 6. For every non-java.lang class you reference, add an explicit import from SOURCE FILE IMPORTS.
 7. NEVER pass bare null to any overloaded method — always cast it (e.g. (File) null).
 8. Do NOT access private fields or methods.
+8a. NEVER create anonymous subclasses or anonymous implementations using new ClassName() {{ ... }} syntax. This is forbidden for ALL classes. If you cannot construct an object through its public constructor or factory method, write a TODO comment and omit that test entirely.
 9. The file must contain exactly one TOP-LEVEL type: `{test_class_name}`. Helper types may be `static` nested classes INSIDE `{test_class_name}` but must not share a name with any production class. Do NOT add extra top-level classes.
 
 === OUTPUT FORMAT ===
@@ -1019,9 +1079,14 @@ _RECOVERY_INSTRUCTIONS = {
         "constructor call, or static reference in at least one test method."
     ),
     'trivial_assertions': (
-        "All your test methods contain only assertTrue(true) or have empty bodies. "
-        "Write real assertions that verify actual return values or state changes. "
-        "If a test scenario cannot be implemented, omit that test method entirely."
+        "All your test methods have weak or missing assertions. "
+        "assertNotNull alone is NOT sufficient — it does not verify correctness. "
+        "Every @Test method MUST contain at least one assertEquals(expected, actual), "
+        "assertThrows(Exception.class, ...), or assertTrue/assertFalse with a specific "
+        "condition derived from the method's documented behavior. "
+        "Do NOT reproduce the production method's logic to compute expected values. "
+        "Use the exact values from the test plan's Assertion derivation section. "
+        "If a test scenario cannot produce a meaningful assertion, omit that @Test entirely."
     ),
     'no_test_methods': (
         "Your response contains no @Test methods. Implement at least one method "

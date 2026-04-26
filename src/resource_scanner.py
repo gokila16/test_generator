@@ -36,11 +36,11 @@ def scan_test_resources(resources_dir: str) -> dict:
     Returns a dict mapping extension (e.g. '.pdf') -> list of entry dicts.
 
     Each entry dict contains at minimum:
-        rel_path  – relative path from resources_dir (for getResource())
+        rel_path  - relative path from resources_dir (for getResource())
     And, when test_resource_metadata.json is present, also:
-        is_encrypted      – bool
-        password          – str | None
-        file_size_bytes   – int
+        is_encrypted      - bool
+        password          - str | None
+        file_size_bytes   - int
 
     These relative paths are correct for use in getResource() / getResourceAsStream().
     """

@@ -127,8 +127,14 @@ def _is_truncated(java_code):
 
 def _has_only_trivial_assertions(java_code):
     """
-    Returns True if the file contains @Test methods but ALL of them are
-    trivially passing (assertTrue(true) with no other assert, or empty body).
+    Returns True if the file contains @Test methods but ALL of them have
+    only weak/trivial assertions.
+
+    Detected trivial patterns:
+    - Empty body or comments-only body
+    - assertTrue(true) as the sole statement
+    - assertNotNull(...) as the ONLY assertion (no assertEquals, assertThrows, etc.)
+    - No assertion method at all (just setup/method calls with no verification)
     """
     test_body_pattern = re.compile(
         r'@Test\s+(?:@\w+(?:\([^)]*\))?\s+)*'
@@ -140,6 +146,17 @@ def _has_only_trivial_assertions(java_code):
     if not bodies:
         return False  # no @Test methods — handled by _has_test_methods
 
+    # Strong assertion patterns — if ANY of these appear, the test is not trivial
+    _STRONG_ASSERT_RE = re.compile(
+        r'\b(?:assertEquals|assertArrayEquals|assertIterableEquals|assertLinesMatch'
+        r'|assertThrows|assertDoesNotThrow'
+        r'|assertTrue\s*\(\s*(?!true\s*\))'       # assertTrue with a real condition (not just "true")
+        r'|assertFalse'
+        r'|assertSame|assertNotSame'
+        r'|assertAll'
+        r'|fail\s*\()\b'
+    )
+
     def _is_trivial(body):
         stripped = body.strip()
         if not stripped:
@@ -148,7 +165,14 @@ def _has_only_trivial_assertions(java_code):
         no_comments = re.sub(r'/\*.*?\*/', '', no_comments, flags=re.DOTALL).strip()
         if not no_comments:
             return True
-        return bool(re.fullmatch(r'assertTrue\s*\(\s*true\s*\)\s*;', no_comments))
+        # assertTrue(true) only
+        if re.fullmatch(r'assertTrue\s*\(\s*true\s*\)\s*;', no_comments):
+            return True
+        # Check for any strong assertion
+        if _STRONG_ASSERT_RE.search(no_comments):
+            return False  # has a meaningful assertion
+        # If only assertNotNull (or no assertions at all), it's trivial
+        return True
 
     return all(_is_trivial(b) for b in bodies)
 

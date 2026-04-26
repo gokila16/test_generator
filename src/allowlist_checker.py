@@ -257,6 +257,36 @@ def _build_inventory_method_allowlist(method, class_inventory):
     return allowed
 
 
+def _build_project_import_prefixes(source_file_imports: list,
+                                    class_inventory: dict) -> frozenset:
+    """
+    Derives the set of known project package prefixes from source_file_imports
+    and class_inventory keys (e.g. {'org.apache', 'org.apache.pdfbox'}).
+
+    Any import whose FQN starts with one of these prefixes is considered an
+    internal project class and will NOT be flagged as hallucinated.  This
+    prevents false positives when a test legitimately imports a project class
+    (e.g. PDPage, COSName) that did not appear in the production source's
+    imports and is not individually listed in class_inventory.
+    """
+    import_pattern = re.compile(r'import\s+([\w.]+);')
+    candidates = list(class_inventory.keys()) if class_inventory else []
+    for sfi in source_file_imports:
+        m = import_pattern.search(sfi)
+        if m:
+            candidates.append(m.group(1))
+
+    prefixes: set = set()
+    for fqn in candidates:
+        parts = fqn.split('.')
+        # Add prefixes at depth 2 and 3 so that, e.g., any class under
+        # org.apache.pdfbox.* is trusted when pdfbox appears in inventory.
+        for depth in (2, 3):
+            if len(parts) >= depth:
+                prefixes.add('.'.join(parts[:depth]))
+    return frozenset(prefixes)
+
+
 def validate_imports(java_code: str,
                      source_file_imports: list,
                      class_inventory: dict) -> list:
@@ -265,25 +295,34 @@ def validate_imports(java_code: str,
     Returns a list of violation strings for hallucinated imports.
 
     An import is valid if ANY of these are true:
-    - Starts with java. or javax.          (stdlib — trusted unconditionally)
-    - Starts with org.junit                (JUnit 5 — trusted unconditionally)
+    - Starts with java. or javax.              (stdlib — trusted)
+    - Starts with org.junit.                   (any JUnit variant — trusted)
     - Appears verbatim in source_file_imports
-    - Its fully qualified class name exists as a key in class_inventory
+    - Its FQN exists as a key in class_inventory
+    - Its package prefix is a known project prefix derived from
+      class_inventory / source_file_imports  (prevents false positives on
+      project-internal classes not individually listed in the inventory)
 
-    Everything else is a hallucinated import.
+    Only imports from completely unknown / external packages are flagged.
     Violation string format: "HALLUCINATED_IMPORT::fully.qualified.ClassName"
     """
+    project_prefixes = _build_project_import_prefixes(source_file_imports,
+                                                       class_inventory)
     violations = []
     found_imports = re.findall(r'^\s*import\s+([\w.]+)\s*;', java_code, re.MULTILINE)
     for fqn in found_imports:
         if fqn.startswith('java.') or fqn.startswith('javax.'):
             continue
-        if fqn.startswith('org.junit.jupiter') or fqn.startswith('org.junit.platform'):
+        # Trust all org.junit.* (covers JUnit 4 and 5 variants)
+        if fqn.startswith('org.junit.'):
             continue
         import_stmt = f"import {fqn};"
         if any(import_stmt in sfi for sfi in source_file_imports):
             continue
         if class_inventory and fqn in class_inventory:
+            continue
+        # Trust imports from the project's own packages
+        if project_prefixes and any(fqn.startswith(p + '.') for p in project_prefixes):
             continue
         violations.append(f"HALLUCINATED_IMPORT::{fqn}")
     return violations

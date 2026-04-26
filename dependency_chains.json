@@ -11,8 +11,8 @@
         "type": "File",
         "name": "file",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "File file = new File(getClass().getClassLoader().getResource(\"cweb.pdf\").toURI());"
+        "resource_file": "input/cweb.pdf",
+        "construction": "File file = new File(getClass().getClassLoader().getResource(\"input/cweb.pdf\").toURI());"
       }
     ],
     "resolution_quality": "full"
@@ -29,8 +29,8 @@
         "type": "InputStream",
         "name": "input",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream input = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream input = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       }
     ],
     "resolution_quality": "full"
@@ -59,8 +59,8 @@
         "type": "InputStream",
         "name": "keyStore",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream keyStore = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream keyStore = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "String",
@@ -89,8 +89,8 @@
         "type": "File",
         "name": "file",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "File file = new File(getClass().getClassLoader().getResource(\"cweb.pdf\").toURI());"
+        "resource_file": "input/cweb.pdf",
+        "construction": "File file = new File(getClass().getClassLoader().getResource(\"input/cweb.pdf\").toURI());"
       },
       {
         "type": "String",
@@ -102,8 +102,8 @@
         "type": "InputStream",
         "name": "keyStore",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream keyStore = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream keyStore = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "String",
@@ -132,8 +132,8 @@
         "type": "RandomAccessRead",
         "name": "randomAccessRead",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream _is_randomAccessRead = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");\nRandomAccessReadBuffer randomAccessRead = new RandomAccessReadBuffer(_is_randomAccessRead);"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream _is_randomAccessRead = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");\nRandomAccessReadBuffer randomAccessRead = new RandomAccessReadBuffer(_is_randomAccessRead);"
       },
       {
         "type": "String",
@@ -156,8 +156,8 @@
         "type": "RandomAccessRead",
         "name": "randomAccessRead",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream _is_randomAccessRead = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");\nRandomAccessReadBuffer randomAccessRead = new RandomAccessReadBuffer(_is_randomAccessRead);"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream _is_randomAccessRead = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");\nRandomAccessReadBuffer randomAccessRead = new RandomAccessReadBuffer(_is_randomAccessRead);"
       },
       {
         "type": "String",
@@ -169,8 +169,8 @@
         "type": "InputStream",
         "name": "keyStore",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream keyStore = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream keyStore = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "String",
@@ -193,8 +193,8 @@
         "type": "RandomAccessRead",
         "name": "randomAccessRead",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream _is_randomAccessRead = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");\nRandomAccessReadBuffer randomAccessRead = new RandomAccessReadBuffer(_is_randomAccessRead);"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream _is_randomAccessRead = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");\nRandomAccessReadBuffer randomAccessRead = new RandomAccessReadBuffer(_is_randomAccessRead);"
       },
       {
         "type": "String",
@@ -206,8 +206,8 @@
         "type": "InputStream",
         "name": "keyStore",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream keyStore = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream keyStore = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "String",
@@ -264,7 +264,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -398,10 +398,10 @@
     "method_name": "process",
     "is_static": false,
     "receiver": {
-      "type": "DrawObject",
-      "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "DrawObject instance = new DrawObject(/* PDFStreamEngine */null);"
+      "construction": "PDFTextStripper _engine_instance = new PDFTextStripper();\nDrawObject instance = new DrawObject(_engine_instance);",
+      "type": "DrawObject",
+      "name": "instance"
     },
     "params": [
       {
@@ -415,7 +415,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -427,11 +427,11 @@
     "method_name": "process",
     "is_static": false,
     "receiver": {
+      "strategy": "subclass",
+      "subclass": "SetStrokingDeviceRGBColor",
+      "construction": "PDFTextStripper _engine_instance = new PDFTextStripper();\nSetColor instance = new SetStrokingDeviceRGBColor(_engine_instance);",
       "type": "SetColor",
-      "name": "instance",
-      "strategy": "unresolvable_abstract",
-      "construction": "/* SetColor instance — abstract/interface, no concrete subclass found */",
-      "reason": "abstract or interface with no concrete subclass in inventory"
+      "name": "instance"
     },
     "params": [
       {
@@ -445,10 +445,10 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
-    "resolution_quality": "unresolvable"
+    "resolution_quality": "full"
   },
   "org.apache.pdfbox.contentstream.operator.color.SetNonStrokingColorSpace.process|public void process(Operator operator, List<COSBase> arguments) throws IOException": {
     "full_name": "org.apache.pdfbox.contentstream.operator.color.SetNonStrokingColorSpace.process",
@@ -457,10 +457,10 @@
     "method_name": "process",
     "is_static": false,
     "receiver": {
-      "type": "SetNonStrokingColorSpace",
-      "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetNonStrokingColorSpace instance = new SetNonStrokingColorSpace(/* PDFStreamEngine */null);"
+      "construction": "PDFTextStripper _engine_instance = new PDFTextStripper();\nSetNonStrokingColorSpace instance = new SetNonStrokingColorSpace(_engine_instance);",
+      "type": "SetNonStrokingColorSpace",
+      "name": "instance"
     },
     "params": [
       {
@@ -474,7 +474,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -486,10 +486,10 @@
     "method_name": "process",
     "is_static": false,
     "receiver": {
-      "type": "SetNonStrokingDeviceCMYKColor",
-      "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetNonStrokingDeviceCMYKColor instance = new SetNonStrokingDeviceCMYKColor(/* PDFStreamEngine */null);"
+      "construction": "PDFTextStripper _engine_instance = new PDFTextStripper();\nSetNonStrokingDeviceCMYKColor instance = new SetNonStrokingDeviceCMYKColor(_engine_instance);",
+      "type": "SetNonStrokingDeviceCMYKColor",
+      "name": "instance"
     },
     "params": [
       {
@@ -503,7 +503,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -515,10 +515,10 @@
     "method_name": "process",
     "is_static": false,
     "receiver": {
-      "type": "SetNonStrokingDeviceGrayColor",
-      "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetNonStrokingDeviceGrayColor instance = new SetNonStrokingDeviceGrayColor(/* PDFStreamEngine */null);"
+      "construction": "PDFTextStripper _engine_instance = new PDFTextStripper();\nSetNonStrokingDeviceGrayColor instance = new SetNonStrokingDeviceGrayColor(_engine_instance);",
+      "type": "SetNonStrokingDeviceGrayColor",
+      "name": "instance"
     },
     "params": [
       {
@@ -532,7 +532,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -544,10 +544,10 @@
     "method_name": "process",
     "is_static": false,
     "receiver": {
-      "type": "SetNonStrokingDeviceRGBColor",
-      "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetNonStrokingDeviceRGBColor instance = new SetNonStrokingDeviceRGBColor(/* PDFStreamEngine */null);"
+      "construction": "PDFTextStripper _engine_instance = new PDFTextStripper();\nSetNonStrokingDeviceRGBColor instance = new SetNonStrokingDeviceRGBColor(_engine_instance);",
+      "type": "SetNonStrokingDeviceRGBColor",
+      "name": "instance"
     },
     "params": [
       {
@@ -561,7 +561,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -573,10 +573,10 @@
     "method_name": "process",
     "is_static": false,
     "receiver": {
-      "type": "SetStrokingColorSpace",
-      "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetStrokingColorSpace instance = new SetStrokingColorSpace(/* PDFStreamEngine */null);"
+      "construction": "PDFTextStripper _engine_instance = new PDFTextStripper();\nSetStrokingColorSpace instance = new SetStrokingColorSpace(_engine_instance);",
+      "type": "SetStrokingColorSpace",
+      "name": "instance"
     },
     "params": [
       {
@@ -590,7 +590,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -602,10 +602,10 @@
     "method_name": "process",
     "is_static": false,
     "receiver": {
-      "type": "SetStrokingDeviceCMYKColor",
-      "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetStrokingDeviceCMYKColor instance = new SetStrokingDeviceCMYKColor(/* PDFStreamEngine */null);"
+      "construction": "PDFTextStripper _engine_instance = new PDFTextStripper();\nSetStrokingDeviceCMYKColor instance = new SetStrokingDeviceCMYKColor(_engine_instance);",
+      "type": "SetStrokingDeviceCMYKColor",
+      "name": "instance"
     },
     "params": [
       {
@@ -619,7 +619,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -631,10 +631,10 @@
     "method_name": "process",
     "is_static": false,
     "receiver": {
-      "type": "SetStrokingDeviceGrayColor",
-      "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetStrokingDeviceGrayColor instance = new SetStrokingDeviceGrayColor(/* PDFStreamEngine */null);"
+      "construction": "PDFTextStripper _engine_instance = new PDFTextStripper();\nSetStrokingDeviceGrayColor instance = new SetStrokingDeviceGrayColor(_engine_instance);",
+      "type": "SetStrokingDeviceGrayColor",
+      "name": "instance"
     },
     "params": [
       {
@@ -648,7 +648,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -660,10 +660,10 @@
     "method_name": "process",
     "is_static": false,
     "receiver": {
-      "type": "SetStrokingDeviceRGBColor",
-      "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetStrokingDeviceRGBColor instance = new SetStrokingDeviceRGBColor(/* PDFStreamEngine */null);"
+      "construction": "PDFTextStripper _engine_instance = new PDFTextStripper();\nSetStrokingDeviceRGBColor instance = new SetStrokingDeviceRGBColor(_engine_instance);",
+      "type": "SetStrokingDeviceRGBColor",
+      "name": "instance"
     },
     "params": [
       {
@@ -677,7 +677,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -689,10 +689,10 @@
     "method_name": "process",
     "is_static": false,
     "receiver": {
-      "type": "AppendRectangleToPath",
-      "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "AppendRectangleToPath instance = new AppendRectangleToPath(/* PDFGraphicsStreamEngine */null);"
+      "construction": "PDDocument _doc_instance = new PDDocument();\nPDPage _page_instance = new PDPage();\n_doc_instance.addPage(_page_instance);\nPageDrawerParameters _params_instance = new PageDrawerParameters(new PageDrawer(), _page_instance, false);\nPageDrawer _pd_instance = new PageDrawer(_params_instance);\nAppendRectangleToPath instance = new AppendRectangleToPath(_pd_instance);",
+      "type": "AppendRectangleToPath",
+      "name": "instance"
     },
     "params": [
       {
@@ -706,7 +706,7 @@
         "type": "List",
         "name": "operands",
         "strategy": "collection",
-        "construction": "List operands = new ArrayList<>();"
+        "construction": "List<COSBase> operands = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -718,10 +718,10 @@
     "method_name": "process",
     "is_static": false,
     "receiver": {
-      "type": "BeginInlineImage",
-      "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "BeginInlineImage instance = new BeginInlineImage(/* PDFGraphicsStreamEngine */null);"
+      "construction": "PDDocument _doc_instance = new PDDocument();\nPDPage _page_instance = new PDPage();\n_doc_instance.addPage(_page_instance);\nPageDrawerParameters _params_instance = new PageDrawerParameters(new PageDrawer(), _page_instance, false);\nPageDrawer _pd_instance = new PageDrawer(_params_instance);\nBeginInlineImage instance = new BeginInlineImage(_pd_instance);",
+      "type": "BeginInlineImage",
+      "name": "instance"
     },
     "params": [
       {
@@ -735,7 +735,7 @@
         "type": "List",
         "name": "operands",
         "strategy": "collection",
-        "construction": "List operands = new ArrayList<>();"
+        "construction": "List<COSBase> operands = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -750,7 +750,7 @@
       "type": "CloseAndStrokePath",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "CloseAndStrokePath instance = new CloseAndStrokePath(/* PDFGraphicsStreamEngine */null);"
+      "construction": "PDDocument _doc__p0_instance = new PDDocument();\nPDPage _page__p0_instance = new PDPage();\n_doc__p0_instance.addPage(_page__p0_instance);\nPageDrawerParameters _params__p0_instance = new PageDrawerParameters(new PageDrawer(), _page__p0_instance, false);\nPDFGraphicsStreamEngine _p0_instance = new PageDrawer(_params__p0_instance);\nCloseAndStrokePath instance = new CloseAndStrokePath(_p0_instance);"
     },
     "params": [
       {
@@ -764,7 +764,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -779,7 +779,7 @@
       "type": "CloseFillEvenOddAndStrokePath",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "CloseFillEvenOddAndStrokePath instance = new CloseFillEvenOddAndStrokePath(/* PDFGraphicsStreamEngine */null);"
+      "construction": "PDDocument _doc__p0_instance = new PDDocument();\nPDPage _page__p0_instance = new PDPage();\n_doc__p0_instance.addPage(_page__p0_instance);\nPageDrawerParameters _params__p0_instance = new PageDrawerParameters(new PageDrawer(), _page__p0_instance, false);\nPDFGraphicsStreamEngine _p0_instance = new PageDrawer(_params__p0_instance);\nCloseFillEvenOddAndStrokePath instance = new CloseFillEvenOddAndStrokePath(_p0_instance);"
     },
     "params": [
       {
@@ -793,7 +793,7 @@
         "type": "List",
         "name": "operands",
         "strategy": "collection",
-        "construction": "List operands = new ArrayList<>();"
+        "construction": "List<COSBase> operands = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -808,7 +808,7 @@
       "type": "CloseFillNonZeroAndStrokePath",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "CloseFillNonZeroAndStrokePath instance = new CloseFillNonZeroAndStrokePath(/* PDFGraphicsStreamEngine */null);"
+      "construction": "PDDocument _doc__p0_instance = new PDDocument();\nPDPage _page__p0_instance = new PDPage();\n_doc__p0_instance.addPage(_page__p0_instance);\nPageDrawerParameters _params__p0_instance = new PageDrawerParameters(new PageDrawer(), _page__p0_instance, false);\nPDFGraphicsStreamEngine _p0_instance = new PageDrawer(_params__p0_instance);\nCloseFillNonZeroAndStrokePath instance = new CloseFillNonZeroAndStrokePath(_p0_instance);"
     },
     "params": [
       {
@@ -822,7 +822,7 @@
         "type": "List",
         "name": "operands",
         "strategy": "collection",
-        "construction": "List operands = new ArrayList<>();"
+        "construction": "List<COSBase> operands = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -837,7 +837,7 @@
       "type": "ClosePath",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "ClosePath instance = new ClosePath(/* PDFGraphicsStreamEngine */null);"
+      "construction": "PDDocument _doc__p0_instance = new PDDocument();\nPDPage _page__p0_instance = new PDPage();\n_doc__p0_instance.addPage(_page__p0_instance);\nPageDrawerParameters _params__p0_instance = new PageDrawerParameters(new PageDrawer(), _page__p0_instance, false);\nPDFGraphicsStreamEngine _p0_instance = new PageDrawer(_params__p0_instance);\nClosePath instance = new ClosePath(_p0_instance);"
     },
     "params": [
       {
@@ -851,7 +851,7 @@
         "type": "List",
         "name": "operands",
         "strategy": "collection",
-        "construction": "List operands = new ArrayList<>();"
+        "construction": "List<COSBase> operands = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -866,7 +866,7 @@
       "type": "CurveTo",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "CurveTo instance = new CurveTo(/* PDFGraphicsStreamEngine */null);"
+      "construction": "PDDocument _doc__p0_instance = new PDDocument();\nPDPage _page__p0_instance = new PDPage();\n_doc__p0_instance.addPage(_page__p0_instance);\nPageDrawerParameters _params__p0_instance = new PageDrawerParameters(new PageDrawer(), _page__p0_instance, false);\nPDFGraphicsStreamEngine _p0_instance = new PageDrawer(_params__p0_instance);\nCurveTo instance = new CurveTo(_p0_instance);"
     },
     "params": [
       {
@@ -880,7 +880,7 @@
         "type": "List",
         "name": "operands",
         "strategy": "collection",
-        "construction": "List operands = new ArrayList<>();"
+        "construction": "List<COSBase> operands = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -895,7 +895,7 @@
       "type": "CurveToReplicateFinalPoint",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "CurveToReplicateFinalPoint instance = new CurveToReplicateFinalPoint(/* PDFGraphicsStreamEngine */null);"
+      "construction": "PDDocument _doc__p0_instance = new PDDocument();\nPDPage _page__p0_instance = new PDPage();\n_doc__p0_instance.addPage(_page__p0_instance);\nPageDrawerParameters _params__p0_instance = new PageDrawerParameters(new PageDrawer(), _page__p0_instance, false);\nPDFGraphicsStreamEngine _p0_instance = new PageDrawer(_params__p0_instance);\nCurveToReplicateFinalPoint instance = new CurveToReplicateFinalPoint(_p0_instance);"
     },
     "params": [
       {
@@ -909,7 +909,7 @@
         "type": "List",
         "name": "operands",
         "strategy": "collection",
-        "construction": "List operands = new ArrayList<>();"
+        "construction": "List<COSBase> operands = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -924,7 +924,7 @@
       "type": "CurveToReplicateInitialPoint",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "CurveToReplicateInitialPoint instance = new CurveToReplicateInitialPoint(/* PDFGraphicsStreamEngine */null);"
+      "construction": "PDDocument _doc__p0_instance = new PDDocument();\nPDPage _page__p0_instance = new PDPage();\n_doc__p0_instance.addPage(_page__p0_instance);\nPageDrawerParameters _params__p0_instance = new PageDrawerParameters(new PageDrawer(), _page__p0_instance, false);\nPDFGraphicsStreamEngine _p0_instance = new PageDrawer(_params__p0_instance);\nCurveToReplicateInitialPoint instance = new CurveToReplicateInitialPoint(_p0_instance);"
     },
     "params": [
       {
@@ -938,7 +938,7 @@
         "type": "List",
         "name": "operands",
         "strategy": "collection",
-        "construction": "List operands = new ArrayList<>();"
+        "construction": "List<COSBase> operands = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -950,10 +950,10 @@
     "method_name": "process",
     "is_static": false,
     "receiver": {
-      "type": "DrawObject",
-      "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "DrawObject instance = new DrawObject(/* PDFStreamEngine */null);"
+      "construction": "PDFTextStripper _engine_instance = new PDFTextStripper();\nDrawObject instance = new DrawObject(_engine_instance);",
+      "type": "DrawObject",
+      "name": "instance"
     },
     "params": [
       {
@@ -967,7 +967,7 @@
         "type": "List",
         "name": "operands",
         "strategy": "collection",
-        "construction": "List operands = new ArrayList<>();"
+        "construction": "List<COSBase> operands = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -982,7 +982,7 @@
       "type": "LineTo",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "LineTo instance = new LineTo(/* PDFGraphicsStreamEngine */null);"
+      "construction": "PDDocument _doc__p0_instance = new PDDocument();\nPDPage _page__p0_instance = new PDPage();\n_doc__p0_instance.addPage(_page__p0_instance);\nPageDrawerParameters _params__p0_instance = new PageDrawerParameters(new PageDrawer(), _page__p0_instance, false);\nPDFGraphicsStreamEngine _p0_instance = new PageDrawer(_params__p0_instance);\nLineTo instance = new LineTo(_p0_instance);"
     },
     "params": [
       {
@@ -996,7 +996,7 @@
         "type": "List",
         "name": "operands",
         "strategy": "collection",
-        "construction": "List operands = new ArrayList<>();"
+        "construction": "List<COSBase> operands = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1011,7 +1011,7 @@
       "type": "MoveTo",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "MoveTo instance = new MoveTo(/* PDFGraphicsStreamEngine */null);"
+      "construction": "PDDocument _doc__p0_instance = new PDDocument();\nPDPage _page__p0_instance = new PDPage();\n_doc__p0_instance.addPage(_page__p0_instance);\nPageDrawerParameters _params__p0_instance = new PageDrawerParameters(new PageDrawer(), _page__p0_instance, false);\nPDFGraphicsStreamEngine _p0_instance = new PageDrawer(_params__p0_instance);\nMoveTo instance = new MoveTo(_p0_instance);"
     },
     "params": [
       {
@@ -1025,7 +1025,7 @@
         "type": "List",
         "name": "operands",
         "strategy": "collection",
-        "construction": "List operands = new ArrayList<>();"
+        "construction": "List<COSBase> operands = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1040,7 +1040,7 @@
       "type": "ShadingFill",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "ShadingFill instance = new ShadingFill(/* PDFGraphicsStreamEngine */null);"
+      "construction": "PDDocument _doc__p0_instance = new PDDocument();\nPDPage _page__p0_instance = new PDPage();\n_doc__p0_instance.addPage(_page__p0_instance);\nPageDrawerParameters _params__p0_instance = new PageDrawerParameters(new PageDrawer(), _page__p0_instance, false);\nPDFGraphicsStreamEngine _p0_instance = new PageDrawer(_params__p0_instance);\nShadingFill instance = new ShadingFill(_p0_instance);"
     },
     "params": [
       {
@@ -1054,7 +1054,7 @@
         "type": "List",
         "name": "operands",
         "strategy": "collection",
-        "construction": "List operands = new ArrayList<>();"
+        "construction": "List<COSBase> operands = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1069,7 +1069,7 @@
       "type": "BeginMarkedContentSequence",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "BeginMarkedContentSequence instance = new BeginMarkedContentSequence(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nBeginMarkedContentSequence instance = new BeginMarkedContentSequence(_p0_instance);"
     },
     "params": [
       {
@@ -1083,7 +1083,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1098,7 +1098,7 @@
       "type": "BeginMarkedContentSequenceWithProperties",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "BeginMarkedContentSequenceWithProperties instance = new BeginMarkedContentSequenceWithProperties(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nBeginMarkedContentSequenceWithProperties instance = new BeginMarkedContentSequenceWithProperties(_p0_instance);"
     },
     "params": [
       {
@@ -1112,7 +1112,7 @@
         "type": "List",
         "name": "operands",
         "strategy": "collection",
-        "construction": "List operands = new ArrayList<>();"
+        "construction": "List<COSBase> operands = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1124,10 +1124,10 @@
     "method_name": "process",
     "is_static": false,
     "receiver": {
-      "type": "DrawObject",
-      "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "DrawObject instance = new DrawObject(/* PDFStreamEngine */null);"
+      "construction": "PDFTextStripper _engine_instance = new PDFTextStripper();\nDrawObject instance = new DrawObject(_engine_instance);",
+      "type": "DrawObject",
+      "name": "instance"
     },
     "params": [
       {
@@ -1141,7 +1141,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1156,7 +1156,7 @@
       "type": "MarkedContentPoint",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "MarkedContentPoint instance = new MarkedContentPoint(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nMarkedContentPoint instance = new MarkedContentPoint(_p0_instance);"
     },
     "params": [
       {
@@ -1170,7 +1170,7 @@
         "type": "List",
         "name": "operands",
         "strategy": "collection",
-        "construction": "List operands = new ArrayList<>();"
+        "construction": "List<COSBase> operands = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1185,7 +1185,7 @@
       "type": "MarkedContentPointWithProperties",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "MarkedContentPointWithProperties instance = new MarkedContentPointWithProperties(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nMarkedContentPointWithProperties instance = new MarkedContentPointWithProperties(_p0_instance);"
     },
     "params": [
       {
@@ -1199,7 +1199,7 @@
         "type": "List",
         "name": "operands",
         "strategy": "collection",
-        "construction": "List operands = new ArrayList<>();"
+        "construction": "List<COSBase> operands = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1214,7 +1214,7 @@
       "type": "Concatenate",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "Concatenate instance = new Concatenate(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nConcatenate instance = new Concatenate(_p0_instance);"
     },
     "params": [
       {
@@ -1228,7 +1228,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1243,7 +1243,7 @@
       "type": "Restore",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "Restore instance = new Restore(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nRestore instance = new Restore(_p0_instance);"
     },
     "params": [
       {
@@ -1257,7 +1257,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1272,7 +1272,7 @@
       "type": "SetFlatness",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetFlatness instance = new SetFlatness(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nSetFlatness instance = new SetFlatness(_p0_instance);"
     },
     "params": [
       {
@@ -1286,7 +1286,7 @@
         "type": "List",
         "name": "operands",
         "strategy": "collection",
-        "construction": "List operands = new ArrayList<>();"
+        "construction": "List<COSBase> operands = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1301,7 +1301,7 @@
       "type": "SetGraphicsStateParameters",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetGraphicsStateParameters instance = new SetGraphicsStateParameters(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nSetGraphicsStateParameters instance = new SetGraphicsStateParameters(_p0_instance);"
     },
     "params": [
       {
@@ -1315,7 +1315,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1330,7 +1330,7 @@
       "type": "SetLineCapStyle",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetLineCapStyle instance = new SetLineCapStyle(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nSetLineCapStyle instance = new SetLineCapStyle(_p0_instance);"
     },
     "params": [
       {
@@ -1344,7 +1344,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1359,7 +1359,7 @@
       "type": "SetLineDashPattern",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetLineDashPattern instance = new SetLineDashPattern(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nSetLineDashPattern instance = new SetLineDashPattern(_p0_instance);"
     },
     "params": [
       {
@@ -1373,7 +1373,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1388,7 +1388,7 @@
       "type": "SetLineJoinStyle",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetLineJoinStyle instance = new SetLineJoinStyle(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nSetLineJoinStyle instance = new SetLineJoinStyle(_p0_instance);"
     },
     "params": [
       {
@@ -1402,7 +1402,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1417,7 +1417,7 @@
       "type": "SetLineMiterLimit",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetLineMiterLimit instance = new SetLineMiterLimit(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nSetLineMiterLimit instance = new SetLineMiterLimit(_p0_instance);"
     },
     "params": [
       {
@@ -1431,7 +1431,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1446,7 +1446,7 @@
       "type": "SetLineWidth",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetLineWidth instance = new SetLineWidth(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nSetLineWidth instance = new SetLineWidth(_p0_instance);"
     },
     "params": [
       {
@@ -1460,7 +1460,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1475,7 +1475,7 @@
       "type": "SetMatrix",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetMatrix instance = new SetMatrix(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nSetMatrix instance = new SetMatrix(_p0_instance);"
     },
     "params": [
       {
@@ -1489,7 +1489,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1504,7 +1504,7 @@
       "type": "SetRenderingIntent",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetRenderingIntent instance = new SetRenderingIntent(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nSetRenderingIntent instance = new SetRenderingIntent(_p0_instance);"
     },
     "params": [
       {
@@ -1518,7 +1518,7 @@
         "type": "List",
         "name": "operands",
         "strategy": "collection",
-        "construction": "List operands = new ArrayList<>();"
+        "construction": "List<COSBase> operands = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1533,7 +1533,7 @@
       "type": "BeginText",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "BeginText instance = new BeginText(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nBeginText instance = new BeginText(_p0_instance);"
     },
     "params": [
       {
@@ -1547,7 +1547,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1562,7 +1562,7 @@
       "type": "EndText",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "EndText instance = new EndText(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nEndText instance = new EndText(_p0_instance);"
     },
     "params": [
       {
@@ -1576,7 +1576,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1591,7 +1591,7 @@
       "type": "MoveText",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "MoveText instance = new MoveText(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nMoveText instance = new MoveText(_p0_instance);"
     },
     "params": [
       {
@@ -1605,7 +1605,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1620,7 +1620,7 @@
       "type": "MoveTextSetLeading",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "MoveTextSetLeading instance = new MoveTextSetLeading(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nMoveTextSetLeading instance = new MoveTextSetLeading(_p0_instance);"
     },
     "params": [
       {
@@ -1634,7 +1634,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1649,7 +1649,7 @@
       "type": "NextLine",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "NextLine instance = new NextLine(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nNextLine instance = new NextLine(_p0_instance);"
     },
     "params": [
       {
@@ -1663,7 +1663,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1678,7 +1678,7 @@
       "type": "SetCharSpacing",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetCharSpacing instance = new SetCharSpacing(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nSetCharSpacing instance = new SetCharSpacing(_p0_instance);"
     },
     "params": [
       {
@@ -1692,7 +1692,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1707,7 +1707,7 @@
       "type": "SetFontAndSize",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetFontAndSize instance = new SetFontAndSize(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nSetFontAndSize instance = new SetFontAndSize(_p0_instance);"
     },
     "params": [
       {
@@ -1721,7 +1721,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1736,7 +1736,7 @@
       "type": "SetTextHorizontalScaling",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetTextHorizontalScaling instance = new SetTextHorizontalScaling(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nSetTextHorizontalScaling instance = new SetTextHorizontalScaling(_p0_instance);"
     },
     "params": [
       {
@@ -1750,7 +1750,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1765,7 +1765,7 @@
       "type": "SetTextLeading",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetTextLeading instance = new SetTextLeading(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nSetTextLeading instance = new SetTextLeading(_p0_instance);"
     },
     "params": [
       {
@@ -1779,7 +1779,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1794,7 +1794,7 @@
       "type": "SetTextRenderingMode",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetTextRenderingMode instance = new SetTextRenderingMode(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nSetTextRenderingMode instance = new SetTextRenderingMode(_p0_instance);"
     },
     "params": [
       {
@@ -1808,7 +1808,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1823,7 +1823,7 @@
       "type": "SetTextRise",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetTextRise instance = new SetTextRise(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nSetTextRise instance = new SetTextRise(_p0_instance);"
     },
     "params": [
       {
@@ -1837,7 +1837,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1852,7 +1852,7 @@
       "type": "SetWordSpacing",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "SetWordSpacing instance = new SetWordSpacing(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nSetWordSpacing instance = new SetWordSpacing(_p0_instance);"
     },
     "params": [
       {
@@ -1866,7 +1866,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1881,7 +1881,7 @@
       "type": "ShowText",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "ShowText instance = new ShowText(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nShowText instance = new ShowText(_p0_instance);"
     },
     "params": [
       {
@@ -1895,7 +1895,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1910,7 +1910,7 @@
       "type": "ShowTextAdjusted",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "ShowTextAdjusted instance = new ShowTextAdjusted(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nShowTextAdjusted instance = new ShowTextAdjusted(_p0_instance);"
     },
     "params": [
       {
@@ -1924,7 +1924,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1939,7 +1939,7 @@
       "type": "ShowTextLine",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "ShowTextLine instance = new ShowTextLine(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nShowTextLine instance = new ShowTextLine(_p0_instance);"
     },
     "params": [
       {
@@ -1953,7 +1953,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -1968,7 +1968,7 @@
       "type": "ShowTextLineAndSpace",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "ShowTextLineAndSpace instance = new ShowTextLineAndSpace(/* PDFStreamEngine */null);"
+      "construction": "PDFStreamEngine _p0_instance = new PDFTextStripper();\nShowTextLineAndSpace instance = new ShowTextLineAndSpace(_p0_instance);"
     },
     "params": [
       {
@@ -1982,7 +1982,7 @@
         "type": "List",
         "name": "arguments",
         "strategy": "collection",
-        "construction": "List arguments = new ArrayList<>();"
+        "construction": "List<COSBase> arguments = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -2138,8 +2138,8 @@
         "type": "InputStream",
         "name": "encoded",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "OutputStream",
@@ -2340,8 +2340,8 @@
         "type": "InputStream",
         "name": "encoded",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "OutputStream",
@@ -2382,8 +2382,8 @@
         "type": "InputStream",
         "name": "input",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream input = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream input = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "OutputStream",
@@ -2512,8 +2512,8 @@
         "type": "InputStream",
         "name": "encoded",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "OutputStream",
@@ -2554,8 +2554,8 @@
         "type": "InputStream",
         "name": "encoded",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "OutputStream",
@@ -2596,8 +2596,8 @@
         "type": "InputStream",
         "name": "encoded",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "OutputStream",
@@ -2668,8 +2668,8 @@
         "type": "InputStream",
         "name": "encoded",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "OutputStream",
@@ -2774,8 +2774,8 @@
         "type": "InputStream",
         "name": "encoded",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "OutputStream",
@@ -2816,8 +2816,8 @@
         "type": "InputStream",
         "name": "encoded",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "OutputStream",
@@ -2864,8 +2864,8 @@
         "type": "InputStream",
         "name": "encoded",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "OutputStream",
@@ -2912,8 +2912,8 @@
         "type": "InputStream",
         "name": "encoded",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "OutputStream",
@@ -3003,8 +3003,8 @@
         "type": "InputStream",
         "name": "encoded",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream encoded = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "OutputStream",
@@ -3573,7 +3573,7 @@
       "type": "COSWriterCompressionPool",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "COSWriterCompressionPool instance = new COSWriterCompressionPool(/* PDDocument */null, /* CompressParameters */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nCOSWriterCompressionPool instance = new COSWriterCompressionPool(_p0_instance, /* CompressParameters */null);"
     },
     "params": [],
     "resolution_quality": "full"
@@ -4389,7 +4389,7 @@
         "type": "PDImageXObject",
         "name": "image",
         "strategy": "constructor_with_args",
-        "construction": "PDImageXObject image = new PDImageXObject(/* PDDocument */null);"
+        "construction": "PDDocument _p0_image = new PDDocument();\nPDImageXObject image = new PDImageXObject(_p0_image);"
       },
       {
         "type": "float",
@@ -4436,7 +4436,7 @@
         "type": "PDImageXObject",
         "name": "image",
         "strategy": "constructor_with_args",
-        "construction": "PDImageXObject image = new PDImageXObject(/* PDDocument */null);"
+        "construction": "PDDocument _p0_image = new PDDocument();\nPDImageXObject image = new PDImageXObject(_p0_image);"
       },
       {
         "type": "Matrix",
@@ -5121,11 +5121,12 @@
       {
         "type": "PDShading",
         "name": "shading",
-        "strategy": "constructor",
-        "construction": "PDShading shading = new PDShading();"
+        "strategy": "unresolvable_abstract",
+        "construction": "/* PDShading shading — abstract/interface, no concrete subclass found */",
+        "reason": "abstract or interface with no concrete subclass in inventory"
       }
     ],
-    "resolution_quality": "full"
+    "resolution_quality": "unresolvable"
   },
   "org.apache.pdfbox.pdmodel.PDAbstractContentStream.showText|public void showText(String text) throws IOException": {
     "full_name": "org.apache.pdfbox.pdmodel.PDAbstractContentStream.showText",
@@ -5707,12 +5708,12 @@
       {
         "type": "COSObjectable",
         "name": "object",
-        "strategy": "unresolvable_abstract",
-        "construction": "/* COSObjectable object — abstract/interface, no concrete subclass found */",
-        "reason": "abstract or interface with no concrete subclass in inventory"
+        "strategy": "subclass",
+        "subclass": "PDDocumentInformation",
+        "construction": "COSObjectable object = new PDDocumentInformation();"
       }
     ],
-    "resolution_quality": "unresolvable"
+    "resolution_quality": "full"
   },
   "org.apache.pdfbox.pdmodel.common.COSDictionaryMap.clear|public void clear()": {
     "full_name": "org.apache.pdfbox.pdmodel.common.COSDictionaryMap.clear",
@@ -5832,7 +5833,7 @@
       "type": "PDMetadata",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "PDMetadata instance = new PDMetadata(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nPDMetadata instance = new PDMetadata(_p0_instance);"
     },
     "params": [
       {
@@ -5967,7 +5968,7 @@
       "type": "PDPageLabels",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "PDPageLabels instance = new PDPageLabels(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nPDPageLabels instance = new PDPageLabels(_p0_instance);"
     },
     "params": [],
     "resolution_quality": "full"
@@ -5982,7 +5983,7 @@
       "type": "PDPageLabels",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "PDPageLabels instance = new PDPageLabels(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nPDPageLabels instance = new PDPageLabels(_p0_instance);"
     },
     "params": [],
     "resolution_quality": "full"
@@ -5997,7 +5998,7 @@
       "type": "PDPageLabels",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "PDPageLabels instance = new PDPageLabels(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nPDPageLabels instance = new PDPageLabels(_p0_instance);"
     },
     "params": [
       {
@@ -6202,7 +6203,7 @@
         "type": "PDEmbeddedFile",
         "name": "file",
         "strategy": "constructor_with_args",
-        "construction": "PDEmbeddedFile file = new PDEmbeddedFile(/* PDDocument */null);"
+        "construction": "PDDocument _p0_file = new PDDocument();\nPDEmbeddedFile file = new PDEmbeddedFile(_p0_file);"
       }
     ],
     "resolution_quality": "full"
@@ -6224,7 +6225,7 @@
         "type": "PDEmbeddedFile",
         "name": "file",
         "strategy": "constructor_with_args",
-        "construction": "PDEmbeddedFile file = new PDEmbeddedFile(/* PDDocument */null);"
+        "construction": "PDDocument _p0_file = new PDDocument();\nPDEmbeddedFile file = new PDEmbeddedFile(_p0_file);"
       }
     ],
     "resolution_quality": "full"
@@ -6239,7 +6240,7 @@
       "type": "PDEmbeddedFile",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "PDEmbeddedFile instance = new PDEmbeddedFile(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nPDEmbeddedFile instance = new PDEmbeddedFile(_p0_instance);"
     },
     "params": [
       {
@@ -6261,7 +6262,7 @@
       "type": "PDEmbeddedFile",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "PDEmbeddedFile instance = new PDEmbeddedFile(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nPDEmbeddedFile instance = new PDEmbeddedFile(_p0_instance);"
     },
     "params": [
       {
@@ -6283,7 +6284,7 @@
       "type": "PDEmbeddedFile",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "PDEmbeddedFile instance = new PDEmbeddedFile(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nPDEmbeddedFile instance = new PDEmbeddedFile(_p0_instance);"
     },
     "params": [
       {
@@ -7556,7 +7557,7 @@
         "type": "List",
         "name": "userProperties",
         "strategy": "collection",
-        "construction": "List userProperties = new ArrayList<>();"
+        "construction": "List<COSBase> userProperties = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -8185,8 +8186,8 @@
         "type": "InputStream",
         "name": "data",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream data = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream data = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "OutputStream",
@@ -8959,7 +8960,7 @@
         "type": "List",
         "name": "inklist",
         "strategy": "collection",
-        "construction": "List inklist = new ArrayList<>();"
+        "construction": "List<COSBase> inklist = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -9413,8 +9414,8 @@
         "type": "File",
         "name": "fileName",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "File fileName = new File(getClass().getClassLoader().getResource(\"cweb.pdf\").toURI());"
+        "resource_file": "input/cweb.pdf",
+        "construction": "File fileName = new File(getClass().getClassLoader().getResource(\"input/cweb.pdf\").toURI());"
       }
     ],
     "resolution_quality": "full"
@@ -9459,8 +9460,8 @@
         "type": "File",
         "name": "fileName",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "File fileName = new File(getClass().getClassLoader().getResource(\"cweb.pdf\").toURI());"
+        "resource_file": "input/cweb.pdf",
+        "construction": "File fileName = new File(getClass().getClassLoader().getResource(\"input/cweb.pdf\").toURI());"
       }
     ],
     "resolution_quality": "full"
@@ -9685,7 +9686,7 @@
       "type": "AcroFormDefaultFixup",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "AcroFormDefaultFixup instance = new AcroFormDefaultFixup(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nAcroFormDefaultFixup instance = new AcroFormDefaultFixup(_p0_instance);"
     },
     "params": [],
     "resolution_quality": "full"
@@ -9700,7 +9701,7 @@
       "type": "AcroFormDefaultsProcessor",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "AcroFormDefaultsProcessor instance = new AcroFormDefaultsProcessor(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nAcroFormDefaultsProcessor instance = new AcroFormDefaultsProcessor(_p0_instance);"
     },
     "params": [],
     "resolution_quality": "full"
@@ -9715,7 +9716,7 @@
       "type": "AcroFormGenerateAppearancesProcessor",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "AcroFormGenerateAppearancesProcessor instance = new AcroFormGenerateAppearancesProcessor(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nAcroFormGenerateAppearancesProcessor instance = new AcroFormGenerateAppearancesProcessor(_p0_instance);"
     },
     "params": [],
     "resolution_quality": "full"
@@ -9730,7 +9731,7 @@
       "type": "AcroFormOrphanWidgetsProcessor",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "AcroFormOrphanWidgetsProcessor instance = new AcroFormOrphanWidgetsProcessor(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nAcroFormOrphanWidgetsProcessor instance = new AcroFormOrphanWidgetsProcessor(_p0_instance);"
     },
     "params": [],
     "resolution_quality": "full"
@@ -9764,8 +9765,8 @@
         "type": "RandomAccessRead",
         "name": "randomAccessRead",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream _is_randomAccessRead = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");\nRandomAccessReadBuffer randomAccessRead = new RandomAccessReadBuffer(_is_randomAccessRead);"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream _is_randomAccessRead = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");\nRandomAccessReadBuffer randomAccessRead = new RandomAccessReadBuffer(_is_randomAccessRead);"
       }
     ],
     "resolution_quality": "full"
@@ -10644,12 +10645,12 @@
       {
         "type": "ResourceCache",
         "name": "resourceCache",
-        "strategy": "unresolvable_abstract",
-        "construction": "/* ResourceCache resourceCache — abstract/interface, no concrete subclass found */",
-        "reason": "abstract or interface with no concrete subclass in inventory"
+        "strategy": "subclass",
+        "subclass": "DefaultResourceCache",
+        "construction": "ResourceCache resourceCache = new DefaultResourceCache();"
       }
     ],
-    "resolution_quality": "unresolvable"
+    "resolution_quality": "full"
   },
   "org.apache.pdfbox.pdmodel.font.PDSimpleFont.hasExplicitWidth|public boolean hasExplicitWidth(int code) throws IOException": {
     "full_name": "org.apache.pdfbox.pdmodel.font.PDSimpleFont.hasExplicitWidth",
@@ -10962,8 +10963,8 @@
         "type": "RandomAccessRead",
         "name": "randomAccessRead",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream _is_randomAccessRead = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");\nRandomAccessReadBuffer randomAccessRead = new RandomAccessReadBuffer(_is_randomAccessRead);"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream _is_randomAccessRead = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");\nRandomAccessReadBuffer randomAccessRead = new RandomAccessReadBuffer(_is_randomAccessRead);"
       },
       {
         "type": "boolean",
@@ -10997,8 +10998,8 @@
         "type": "InputStream",
         "name": "in",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream in = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream in = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       }
     ],
     "resolution_quality": "full"
@@ -11564,8 +11565,8 @@
         "type": "InputStream",
         "name": "ttfStream",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream ttfStream = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream ttfStream = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       }
     ],
     "resolution_quality": "unresolvable"
@@ -12902,7 +12903,7 @@
         "type": "List",
         "name": "ocgs",
         "strategy": "collection",
-        "construction": "List ocgs = new ArrayList<>();"
+        "construction": "List<COSBase> ocgs = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -13138,12 +13139,12 @@
       {
         "type": "ResourceCache",
         "name": "resourceCache",
-        "strategy": "unresolvable_abstract",
-        "construction": "/* ResourceCache resourceCache — abstract/interface, no concrete subclass found */",
-        "reason": "abstract or interface with no concrete subclass in inventory"
+        "strategy": "subclass",
+        "subclass": "DefaultResourceCache",
+        "construction": "ResourceCache resourceCache = new DefaultResourceCache();"
       }
     ],
-    "resolution_quality": "unresolvable"
+    "resolution_quality": "full"
   },
   "org.apache.pdfbox.pdmodel.graphics.pattern.PDAbstractPattern.setMatrix|public void setMatrix(AffineTransform transform)": {
     "full_name": "org.apache.pdfbox.pdmodel.graphics.pattern.PDAbstractPattern.setMatrix",
@@ -13365,8 +13366,9 @@
     "receiver": {
       "type": "PDShading",
       "name": "instance",
-      "strategy": "constructor",
-      "construction": "PDShading instance = new PDShading();"
+      "strategy": "unresolvable_abstract",
+      "construction": "/* PDShading instance — abstract/interface, no concrete subclass found */",
+      "reason": "abstract or interface with no concrete subclass in inventory"
     },
     "params": [
       {
@@ -13376,7 +13378,7 @@
         "construction": "float[] input = new float[0];"
       }
     ],
-    "resolution_quality": "full"
+    "resolution_quality": "unresolvable"
   },
   "org.apache.pdfbox.pdmodel.graphics.shading.PDShading.getBBox|public PDRectangle getBBox()": {
     "full_name": "org.apache.pdfbox.pdmodel.graphics.shading.PDShading.getBBox",
@@ -13387,11 +13389,12 @@
     "receiver": {
       "type": "PDShading",
       "name": "instance",
-      "strategy": "constructor",
-      "construction": "PDShading instance = new PDShading();"
+      "strategy": "unresolvable_abstract",
+      "construction": "/* PDShading instance — abstract/interface, no concrete subclass found */",
+      "reason": "abstract or interface with no concrete subclass in inventory"
     },
     "params": [],
-    "resolution_quality": "full"
+    "resolution_quality": "unresolvable"
   },
   "org.apache.pdfbox.pdmodel.graphics.shading.PDShading.getBackground|public COSArray getBackground()": {
     "full_name": "org.apache.pdfbox.pdmodel.graphics.shading.PDShading.getBackground",
@@ -13402,11 +13405,12 @@
     "receiver": {
       "type": "PDShading",
       "name": "instance",
-      "strategy": "constructor",
-      "construction": "PDShading instance = new PDShading();"
+      "strategy": "unresolvable_abstract",
+      "construction": "/* PDShading instance — abstract/interface, no concrete subclass found */",
+      "reason": "abstract or interface with no concrete subclass in inventory"
     },
     "params": [],
-    "resolution_quality": "full"
+    "resolution_quality": "unresolvable"
   },
   "org.apache.pdfbox.pdmodel.graphics.shading.PDShading.getColorSpace|public PDColorSpace getColorSpace() throws IOException": {
     "full_name": "org.apache.pdfbox.pdmodel.graphics.shading.PDShading.getColorSpace",
@@ -13417,11 +13421,12 @@
     "receiver": {
       "type": "PDShading",
       "name": "instance",
-      "strategy": "constructor",
-      "construction": "PDShading instance = new PDShading();"
+      "strategy": "unresolvable_abstract",
+      "construction": "/* PDShading instance — abstract/interface, no concrete subclass found */",
+      "reason": "abstract or interface with no concrete subclass in inventory"
     },
     "params": [],
-    "resolution_quality": "full"
+    "resolution_quality": "unresolvable"
   },
   "org.apache.pdfbox.pdmodel.graphics.shading.PDShading.getFunction|public PDFunction getFunction() throws IOException": {
     "full_name": "org.apache.pdfbox.pdmodel.graphics.shading.PDShading.getFunction",
@@ -13432,11 +13437,12 @@
     "receiver": {
       "type": "PDShading",
       "name": "instance",
-      "strategy": "constructor",
-      "construction": "PDShading instance = new PDShading();"
+      "strategy": "unresolvable_abstract",
+      "construction": "/* PDShading instance — abstract/interface, no concrete subclass found */",
+      "reason": "abstract or interface with no concrete subclass in inventory"
     },
     "params": [],
-    "resolution_quality": "full"
+    "resolution_quality": "unresolvable"
   },
   "org.apache.pdfbox.pdmodel.graphics.shading.PDShading.setBBox|public void setBBox(PDRectangle newBBox)": {
     "full_name": "org.apache.pdfbox.pdmodel.graphics.shading.PDShading.setBBox",
@@ -13447,8 +13453,9 @@
     "receiver": {
       "type": "PDShading",
       "name": "instance",
-      "strategy": "constructor",
-      "construction": "PDShading instance = new PDShading();"
+      "strategy": "unresolvable_abstract",
+      "construction": "/* PDShading instance — abstract/interface, no concrete subclass found */",
+      "reason": "abstract or interface with no concrete subclass in inventory"
     },
     "params": [
       {
@@ -13458,7 +13465,7 @@
         "construction": "PDRectangle newBBox = new PDRectangle();"
       }
     ],
-    "resolution_quality": "full"
+    "resolution_quality": "unresolvable"
   },
   "org.apache.pdfbox.pdmodel.graphics.shading.PDShading.setColorSpace|public void setColorSpace(PDColorSpace colorSpace)": {
     "full_name": "org.apache.pdfbox.pdmodel.graphics.shading.PDShading.setColorSpace",
@@ -13469,8 +13476,9 @@
     "receiver": {
       "type": "PDShading",
       "name": "instance",
-      "strategy": "constructor",
-      "construction": "PDShading instance = new PDShading();"
+      "strategy": "unresolvable_abstract",
+      "construction": "/* PDShading instance — abstract/interface, no concrete subclass found */",
+      "reason": "abstract or interface with no concrete subclass in inventory"
     },
     "params": [
       {
@@ -13481,7 +13489,7 @@
         "construction": "PDColorSpace colorSpace = new PDCalGray();"
       }
     ],
-    "resolution_quality": "full"
+    "resolution_quality": "unresolvable"
   },
   "org.apache.pdfbox.pdmodel.graphics.shading.PDShadingType1.getDomain|public COSArray getDomain()": {
     "full_name": "org.apache.pdfbox.pdmodel.graphics.shading.PDShadingType1.getDomain",
@@ -13855,11 +13863,12 @@
     "receiver": {
       "type": "ShadingContext",
       "name": "instance",
-      "strategy": "constructor_with_args",
-      "construction": "ShadingContext instance = new ShadingContext(/* PDShading */null, /* ColorModel */null, new AffineTransform(), /* Matrix */null);"
+      "strategy": "unresolvable_abstract",
+      "construction": "/* ShadingContext instance — abstract/interface, no concrete subclass found */",
+      "reason": "abstract or interface with no concrete subclass in inventory"
     },
     "params": [],
-    "resolution_quality": "full"
+    "resolution_quality": "unresolvable"
   },
   "org.apache.pdfbox.pdmodel.graphics.shading.TriangleBasedShadingContext.getRaster|public final Raster getRaster(int x, int y, int w, int h)": {
     "full_name": "org.apache.pdfbox.pdmodel.graphics.shading.TriangleBasedShadingContext.getRaster",
@@ -16187,7 +16196,7 @@
         "type": "List",
         "name": "digestMethod",
         "strategy": "collection",
-        "construction": "List digestMethod = new ArrayList<>();"
+        "construction": "List<COSBase> digestMethod = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -16485,7 +16494,7 @@
         "type": "List",
         "name": "arg",
         "strategy": "collection",
-        "construction": "List arg = new ArrayList<>();"
+        "construction": "List<COSBase> arg = new ArrayList<>();"
       },
       {
         "type": "String>>",
@@ -16646,7 +16655,7 @@
         "type": "PDAcroForm",
         "name": "acroForm",
         "strategy": "constructor_with_args",
-        "construction": "PDAcroForm acroForm = new PDAcroForm(/* PDDocument */null);"
+        "construction": "PDDocument _p0_acroForm = new PDDocument();\nPDAcroForm acroForm = new PDAcroForm(_p0_acroForm);"
       },
       {
         "type": "PDSignatureField",
@@ -16780,7 +16789,7 @@
         "type": "PDStream",
         "name": "holderFormStream",
         "strategy": "constructor_with_args",
-        "construction": "PDStream holderFormStream = new PDStream(/* PDDocument */null);"
+        "construction": "PDDocument _p0_holderFormStream = new PDDocument();\nPDStream holderFormStream = new PDStream(_p0_holderFormStream);"
       },
       {
         "type": "PDRectangle",
@@ -16857,7 +16866,7 @@
         "type": "PDStream",
         "name": "imageFormStream",
         "strategy": "constructor_with_args",
-        "construction": "PDStream imageFormStream = new PDStream(/* PDDocument */null);"
+        "construction": "PDDocument _p0_imageFormStream = new PDDocument();\nPDStream imageFormStream = new PDStream(_p0_imageFormStream);"
       },
       {
         "type": "PDRectangle",
@@ -16875,7 +16884,7 @@
         "type": "PDImageXObject",
         "name": "img",
         "strategy": "constructor_with_args",
-        "construction": "PDImageXObject img = new PDImageXObject(/* PDDocument */null);"
+        "construction": "PDDocument _p0_img = new PDDocument();\nPDImageXObject img = new PDImageXObject(_p0_img);"
       }
     ],
     "resolution_quality": "full"
@@ -16940,7 +16949,7 @@
         "type": "PDStream",
         "name": "innerFormStream",
         "strategy": "constructor_with_args",
-        "construction": "PDStream innerFormStream = new PDStream(/* PDDocument */null);"
+        "construction": "PDDocument _p0_innerFormStream = new PDDocument();\nPDStream innerFormStream = new PDStream(_p0_innerFormStream);"
       },
       {
         "type": "PDRectangle",
@@ -17076,7 +17085,7 @@
         "type": "PDAcroForm",
         "name": "acroForm",
         "strategy": "constructor_with_args",
-        "construction": "PDAcroForm acroForm = new PDAcroForm(/* PDDocument */null);"
+        "construction": "PDDocument _p0_acroForm = new PDDocument();\nPDAcroForm acroForm = new PDAcroForm(_p0_acroForm);"
       }
     ],
     "resolution_quality": "full"
@@ -17227,19 +17236,19 @@
         "type": "PDStream",
         "name": "holderFormStream",
         "strategy": "constructor_with_args",
-        "construction": "PDStream holderFormStream = new PDStream(/* PDDocument */null);"
+        "construction": "PDDocument _p0_holderFormStream = new PDDocument();\nPDStream holderFormStream = new PDStream(_p0_holderFormStream);"
       },
       {
         "type": "PDStream",
         "name": "innerFormStream",
         "strategy": "constructor_with_args",
-        "construction": "PDStream innerFormStream = new PDStream(/* PDDocument */null);"
+        "construction": "PDDocument _p0_innerFormStream = new PDDocument();\nPDStream innerFormStream = new PDStream(_p0_innerFormStream);"
       },
       {
         "type": "PDStream",
         "name": "imageFormStream",
         "strategy": "constructor_with_args",
-        "construction": "PDStream imageFormStream = new PDStream(/* PDDocument */null);"
+        "construction": "PDDocument _p0_imageFormStream = new PDDocument();\nPDStream imageFormStream = new PDStream(_p0_imageFormStream);"
       },
       {
         "type": "COSName",
@@ -18193,7 +18202,7 @@
         "type": "PDAcroForm",
         "name": "form",
         "strategy": "constructor_with_args",
-        "construction": "PDAcroForm form = new PDAcroForm(/* PDDocument */null);"
+        "construction": "PDDocument _p0_form = new PDDocument();\nPDAcroForm form = new PDAcroForm(_p0_form);"
       },
       {
         "type": "COSDictionary",
@@ -18375,7 +18384,7 @@
         "type": "List",
         "name": "children",
         "strategy": "collection",
-        "construction": "List children = new ArrayList<>();"
+        "construction": "List<COSBase> children = new ArrayList<>();"
       }
     ],
     "resolution_quality": "full"
@@ -18849,7 +18858,7 @@
       "type": "PDFPageable",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "PDFPageable instance = new PDFPageable(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nPDFPageable instance = new PDFPageable(_p0_instance);"
     },
     "params": [
       {
@@ -18871,7 +18880,7 @@
       "type": "PDFPageable",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "PDFPageable instance = new PDFPageable(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nPDFPageable instance = new PDFPageable(_p0_instance);"
     },
     "params": [
       {
@@ -18893,7 +18902,7 @@
       "type": "PDFPrintable",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "PDFPrintable instance = new PDFPrintable(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nPDFPrintable instance = new PDFPrintable(_p0_instance);"
     },
     "params": [
       {
@@ -20544,7 +20553,7 @@
       "type": "PDFRenderer",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "PDFRenderer instance = new PDFRenderer(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nPDFRenderer instance = new PDFRenderer(_p0_instance);"
     },
     "params": [
       {
@@ -20578,7 +20587,7 @@
       "type": "PDFRenderer",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "PDFRenderer instance = new PDFRenderer(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nPDFRenderer instance = new PDFRenderer(_p0_instance);"
     },
     "params": [
       {
@@ -20618,7 +20627,7 @@
       "type": "PDFRenderer",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "PDFRenderer instance = new PDFRenderer(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nPDFRenderer instance = new PDFRenderer(_p0_instance);"
     },
     "params": [
       {
@@ -20659,7 +20668,7 @@
       "type": "PDFRenderer",
       "name": "instance",
       "strategy": "constructor_with_args",
-      "construction": "PDFRenderer instance = new PDFRenderer(/* PDDocument */null);"
+      "construction": "PDDocument _p0_instance = new PDDocument();\nPDFRenderer instance = new PDFRenderer(_p0_instance);"
     },
     "params": [
       {
@@ -21485,7 +21494,7 @@
         "type": "List",
         "name": "list",
         "strategy": "collection",
-        "construction": "List list = new ArrayList<>();"
+        "construction": "List<COSBase> list = new ArrayList<>();"
       },
       {
         "type": "T>",
@@ -21687,8 +21696,8 @@
         "type": "InputStream",
         "name": "is",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream is = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream is = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       },
       {
         "type": "boolean",
@@ -21785,8 +21794,8 @@
         "type": "BufferedInputStream",
         "name": "inputStream",
         "strategy": "resource",
-        "resource_file": "cweb.pdf",
-        "construction": "InputStream inputStream = getClass().getClassLoader().getResourceAsStream(\"cweb.pdf\");"
+        "resource_file": "input/cweb.pdf",
+        "construction": "InputStream inputStream = getClass().getClassLoader().getResourceAsStream(\"input/cweb.pdf\");"
       }
     ],
     "resolution_quality": "full"

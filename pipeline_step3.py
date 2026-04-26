@@ -207,7 +207,7 @@ def run_pipeline(skip_set=None):
             continue
 
         # ---- STEP 2: GENERATION FROM PLAN ----
-        gen_prompt = build_generation_from_plan_prompt(method, plan_response)
+        gen_prompt = build_generation_from_plan_prompt(method, plan_response, dep_chain=dep_chain)
         response, _trunc = call_llm(gen_prompt, method_name=method_name)
         if _trunc:
             truncation_count += 1

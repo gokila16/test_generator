@@ -1,12 +1,21 @@
 """
 build_class_inventory.py
 
-Walks a Java source tree, parses every .java file with javalang, and
-produces class_inventory.json — a map of class information used by the
+Walks one or more Java source trees, parses every .java file with javalang,
+and produces class_inventory.json — a map of class information used by the
 test-generation pipeline to figure out how to instantiate objects.
 
 Pass 1: extract class structure from each file.
 Pass 2: populate concrete_subclasses transitively.
+
+FIX (v2):
+  - SOURCE_DIRS is now a list of roots so sibling modules (e.g. pdfbox-io)
+    are also scanned. Previously SOURCE_DIR only pointed at the main pdfbox
+    module, which meant the entire org.apache.pdfbox.io package was missing
+    from the inventory. That caused RandomAccessReadBuffer, RandomAccessRead,
+    IOUtils, and related classes to be absent, leading to:
+      * ALLOWLIST failures (checker had no record of their methods)
+      * constructor_with_args fallback emitting /* RandomAccessReadBuffer */null
 """
 
 import os
@@ -16,7 +25,17 @@ import javalang
 # ============================================================
 # CONFIGURATION
 # ============================================================
-SOURCE_DIR  = r"C:\Users\Harini\Documents\thesis_research\PDFBOX-v5\pdfbox\src\main\java"
+# FIX: Changed from a single SOURCE_DIR to a list SOURCE_DIRS.
+# Add every source root that contains classes the test generator may reference.
+# The pdfbox-io module (org.apache.pdfbox.io.*) was previously missing entirely.
+SOURCE_DIRS = [
+    r"C:\Users\Harini\Documents\thesis_research\PDFBOX-v5\pdfbox\src\main\java",
+    # Add the io module if it is a sibling module — adjust path if needed
+    r"C:\Users\Harini\Documents\thesis_research\PDFBOX-v5\pdfbox-io\src\main\java",
+    # Add rendering module if present
+    r"C:\Users\Harini\Documents\thesis_research\PDFBOX-v5\pdfbox-rendering\src\main\java",
+]
+
 OUTPUT_FILE = r"C:\Users\Harini\Documents\thesis_research\test_generator\class_inventory.json"
 
 
@@ -38,7 +57,6 @@ def _param_types(parameters):
     for p in parameters:
         t = p.type
         name = t.name if hasattr(t, 'name') else str(t)
-        # Append [] for arrays
         if hasattr(t, 'dimensions') and t.dimensions:
             name += '[]' * len(t.dimensions)
         types.append(name)
@@ -49,8 +67,6 @@ def _process_class(node, package_name, outer_name=None):
     """
     Extract inventory entry from a ClassDeclaration, InterfaceDeclaration,
     or EnumDeclaration node.
-
-    outer_name: simple name of the enclosing class for inner classes, or None.
     """
     simple_name = node.name
     class_name  = f"{outer_name}.{simple_name}" if outer_name else simple_name
@@ -59,6 +75,7 @@ def _process_class(node, package_name, outer_name=None):
     is_interface = isinstance(node, javalang.tree.InterfaceDeclaration)
     is_enum      = isinstance(node, javalang.tree.EnumDeclaration)
     is_abstract  = 'abstract' in (node.modifiers or set()) and not is_interface
+    is_final     = 'final'    in (node.modifiers or set()) and not is_interface and not is_enum
 
     # --- Constructors ---
     constructors = []
@@ -72,10 +89,8 @@ def _process_class(node, package_name, outer_name=None):
                 'params':     _param_types(ctor.parameters or []),
                 'visibility': _visibility(ctor.modifiers or set()),
             })
-        # Sort simplest first
         constructors.sort(key=lambda c: len(c['params']))
 
-        # Implicit default constructor if no explicit ctors declared
         if not has_explicit_ctors and not is_abstract:
             constructors.append({'params': [], 'visibility': 'public'})
 
@@ -84,7 +99,6 @@ def _process_class(node, package_name, outer_name=None):
     public_methods  = []
     raw_methods = getattr(node, 'methods', []) or []
 
-    # For interfaces every method is implicitly public even without the keyword
     is_iface = isinstance(node, javalang.tree.InterfaceDeclaration)
 
     for m in raw_methods:
@@ -93,7 +107,6 @@ def _process_class(node, package_name, outer_name=None):
         is_pub  = vis in ('public', 'protected') or is_iface
         is_stat = 'static' in mods
 
-        # Return type string
         ret = m.return_type
         if ret is None:
             ret_name = 'void'
@@ -106,7 +119,6 @@ def _process_class(node, package_name, outer_name=None):
 
         params_str = ', '.join(_param_types(m.parameters or []))
 
-        # Factory methods: public static methods that return the same type
         if 'public' in mods and is_stat and ret_name == simple_name:
             factory_methods.append({
                 'name':    m.name,
@@ -114,7 +126,6 @@ def _process_class(node, package_name, outer_name=None):
                 'returns': ret_name,
             })
 
-        # All public/protected methods (instance and static) for the LLM to call
         if is_pub:
             sig = f"{'static ' if is_stat else ''}{ret_name} {m.name}({params_str})"
             public_methods.append(sig)
@@ -131,7 +142,6 @@ def _process_class(node, package_name, outer_name=None):
     if not is_interface and not is_enum:
         ext = getattr(node, 'extends', None)
         if ext:
-            # ClassDeclaration.extends is a single ReferenceType
             if hasattr(ext, 'name'):
                 extends_class = ext.name
             elif isinstance(ext, list) and ext:
@@ -144,6 +154,7 @@ def _process_class(node, package_name, outer_name=None):
         'is_abstract':            is_abstract,
         'is_interface':           is_interface,
         'is_enum':                is_enum,
+        'is_final':               is_final,
         'constructors':           constructors,
         'factory_methods':        factory_methods,
         'public_methods':         public_methods,
@@ -156,13 +167,11 @@ def _process_class(node, package_name, outer_name=None):
 def _collect_entries(node, package_name, outer_name=None):
     """
     Recursively collect entries for a class node and all its inner classes.
-    Returns a list of entry dicts.
     """
     entries = []
     entry = _process_class(node, package_name, outer_name)
     entries.append(entry)
 
-    # Inner classes / interfaces / enums
     body = getattr(node, 'body', None) or []
     for member in body:
         if isinstance(member, (
@@ -176,21 +185,30 @@ def _collect_entries(node, package_name, outer_name=None):
 
 
 # ============================================================
-# PASS 1 — Walk source tree and parse
+# PASS 1 — Walk source trees and parse
 # ============================================================
 
-def pass1(source_dir):
-    inventory   = {}   # full_name -> entry
+def pass1(source_dirs):
+    """
+    FIX: Accepts a list of source directories instead of a single path.
+    Skips directories that don't exist with a warning rather than crashing.
+    """
+    inventory   = {}
     files_total = 0
     parse_fails = 0
 
     java_files = []
-    for root, _, files in os.walk(source_dir):
-        for f in files:
-            if f.endswith('.java'):
-                java_files.append(os.path.join(root, f))
+    for source_dir in source_dirs:
+        if not os.path.isdir(source_dir):
+            print(f"  WARNING: source dir not found, skipping: {source_dir}")
+            continue
+        print(f"  Scanning: {source_dir}")
+        for root, _, files in os.walk(source_dir):
+            for f in files:
+                if f.endswith('.java'):
+                    java_files.append(os.path.join(root, f))
 
-    print(f"Found {len(java_files)} .java files under {source_dir}")
+    print(f"Found {len(java_files)} .java files across all source roots")
 
     for idx, filepath in enumerate(java_files, 1):
         if idx % 100 == 0:
@@ -216,7 +234,15 @@ def pass1(source_dir):
             )):
                 continue
             for entry in _collect_entries(node, pkg):
-                inventory[entry['full_name']] = entry
+                # FIX: If two modules define the same full_name (shouldn't happen
+                # but guard against it), keep the one with more constructors as it
+                # is likely the real implementation rather than a stub.
+                existing = inventory.get(entry['full_name'])
+                if existing:
+                    if len(entry.get('constructors', [])) > len(existing.get('constructors', [])):
+                        inventory[entry['full_name']] = entry
+                else:
+                    inventory[entry['full_name']] = entry
 
     return inventory, files_total, parse_fails
 
@@ -231,20 +257,16 @@ def pass2(inventory):
     walk up the inheritance chain and add it to every ancestor's
     concrete_subclasses list.
     """
-    # Build a lookup: simple class_name -> list of full_names
-    # (multiple classes may share a simple name across packages)
     by_simple = {}
     for full_name, entry in inventory.items():
         by_simple.setdefault(entry['class_name'], []).append(full_name)
 
     def resolve(simple_name, child_package):
-        """Try to resolve a simple class name to a full_name in the inventory."""
         candidates = by_simple.get(simple_name, [])
         if not candidates:
             return None
         if len(candidates) == 1:
             return candidates[0]
-        # Prefer same package
         for c in candidates:
             if inventory[c]['package_name'] == child_package:
                 return c
@@ -253,7 +275,6 @@ def pass2(inventory):
     for full_name, entry in inventory.items():
         if entry['is_abstract'] or entry['is_interface']:
             continue
-        # Walk ancestry
         current = entry
         visited = set()
         while current.get('extends_class'):
@@ -269,9 +290,7 @@ def pass2(inventory):
                 parent_entry['concrete_subclasses'].append(entry['class_name'])
             current = parent_entry
 
-        # Register this class as a concrete implementor of every interface it declares
         for iface_name in entry.get('interfaces_implemented', []):
-            # Try the name as a fully-qualified key first, then fall back to simple-name resolve
             if iface_name in inventory:
                 iface_full = iface_name
             else:
@@ -284,6 +303,43 @@ def pass2(inventory):
 
 
 # ============================================================
+# PASS 3 — Verify key classes are present and warn if missing
+# ============================================================
+
+# FIX: Added a verification pass that warns about classes the pipeline depends on.
+# This makes it obvious when a source root is missing rather than silently
+# producing an inventory with gaps that cause downstream failures.
+EXPECTED_CLASSES = [
+    "org.apache.pdfbox.io.RandomAccessReadBuffer",
+    "org.apache.pdfbox.io.RandomAccessReadBufferedFile",
+    "org.apache.pdfbox.io.RandomAccessRead",
+    "org.apache.pdfbox.io.IOUtils",
+    "org.apache.pdfbox.text.PDFTextStripper",
+    "org.apache.pdfbox.pdmodel.PDDocument",
+    "org.apache.pdfbox.pdmodel.PDPage",
+    "org.apache.pdfbox.rendering.PageDrawer",
+]
+
+def pass3_verify(inventory):
+    print("\n" + "=" * 50)
+    print("PASS 3: Verifying expected classes are present")
+    print("=" * 50)
+    missing = []
+    for cls in EXPECTED_CLASSES:
+        if cls in inventory:
+            entry = inventory[cls]
+            print(f"  OK  {cls.split('.')[-1]:40} ctors={len(entry.get('constructors',[]))}")
+        else:
+            print(f"  MISSING  {cls}")
+            missing.append(cls)
+    if missing:
+        print(f"\n  WARNING: {len(missing)} expected classes are missing from the inventory.")
+        print("  Check that all source roots in SOURCE_DIRS are correct.")
+    else:
+        print("\n  All expected classes found.")
+
+
+# ============================================================
 # MAIN
 # ============================================================
 
@@ -291,19 +347,22 @@ def main():
     print("=" * 50)
     print("PASS 1: Parsing Java source files")
     print("=" * 50)
-    inventory, files_total, parse_fails = pass1(SOURCE_DIR)
+    inventory, files_total, parse_fails = pass1(SOURCE_DIRS)
 
     print("\n" + "=" * 50)
     print("PASS 2: Populating concrete_subclasses")
     print("=" * 50)
     pass2(inventory)
 
+    pass3_verify(inventory)
+
     # Summary stats
     classes_total      = len(inventory)
     abstract_count     = sum(1 for e in inventory.values() if e['is_abstract'])
     interface_count    = sum(1 for e in inventory.values() if e['is_interface'])
-    enum_count         = sum(1 for e in inventory.values() if e['is_enum'])
-    private_only_count  = sum(
+    enum_count         = sum(1 for e in inventory.values() if e.get('is_enum'))
+    final_count        = sum(1 for e in inventory.values() if e.get('is_final'))
+    private_only_count = sum(
         1 for e in inventory.values()
         if e['constructors']
         and all(c['visibility'] == 'private' for c in e['constructors'])
@@ -319,6 +378,7 @@ def main():
     print(f"  Abstract classes:                {abstract_count}")
     print(f"  Interfaces:                      {interface_count}")
     print(f"  Enums:                           {enum_count}")
+    print(f"  Final classes:                   {final_count}")
     print(f"  Classes with only private ctors: {private_only_count}")
     print(f"  Total public methods extracted:  {total_methods}")
 
