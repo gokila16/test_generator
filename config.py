@@ -22,8 +22,8 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # ============================================
 # LLM SETTINGS
 # ============================================
-LLM_MODEL       = 'gpt-4o-mini'
-LLM_MAX_TOKENS  = 1500
+LLM_MODEL       = 'gemini-2.5-flash'
+LLM_MAX_TOKENS  = 8192
 LLM_TEMPERATURE = 0
 API_SLEEP_SEC   = 1
 MAX_RETRIES = 2

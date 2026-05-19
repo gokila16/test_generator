@@ -43,22 +43,42 @@ def get_test_destination(full_name, class_name, method_name, overload_index=None
     test_class = get_test_class_name(class_name, method_name, overload_index)
     return dest_dir, f"{test_class}.java"
 
-def save_prompt(prompts_dir, full_name, prompt, is_retry=False):
+def save_prompt(prompts_dir, full_name, prompt, is_retry=False, is_allowlist=False, is_plan=False):
     """Saves prompt to prompts/ folder"""
     os.makedirs(prompts_dir, exist_ok=True)
-    suffix = '_retry_prompt.txt' if is_retry else '_prompt.txt'
+    if is_plan:
+        suffix = '_plan_prompt.txt'
+    elif is_allowlist:
+        suffix = '_allowlist_prompt.txt'
+    elif is_retry:
+        suffix = '_retry_prompt.txt'
+    else:
+        suffix = '_gen_prompt.txt'
     path = os.path.join(prompts_dir, sanitize_name(full_name) + suffix)
     with open(path, 'w', encoding='utf-8') as f:
         f.write(prompt)
     return path
 
-def save_response(responses_dir, full_name, response, is_retry=False):
+def save_response(responses_dir, full_name, response, is_retry=False, is_allowlist=False):
     """Saves raw LLM response to responses/ folder"""
     os.makedirs(responses_dir, exist_ok=True)
-    suffix = '_retry_response.txt' if is_retry else '_response.txt'
+    if is_allowlist:
+        suffix = '_allowlist_response.txt'
+    elif is_retry:
+        suffix = '_retry_response.txt'
+    else:
+        suffix = '_response.txt'
     path = os.path.join(responses_dir, sanitize_name(full_name) + suffix)
     with open(path, 'w', encoding='utf-8') as f:
         f.write(response or '')
+    return path
+
+def save_plan(plans_dir, full_name, plan):
+    """Saves the LLM-generated test plan to plans/ folder"""
+    os.makedirs(plans_dir, exist_ok=True)
+    path = os.path.join(plans_dir, sanitize_name(full_name) + '_plan.txt')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(plan or '')
     return path
 
 def save_test_file(generated_tests_dir, full_name, class_name, method_name, java_code, overload_index=None):
