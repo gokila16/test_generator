@@ -7,16 +7,17 @@ load_dotenv()
 import os
 
 BASE_DIR   = os.path.join('C:\\', 'Users', 'Harini',
-                          'Documents', 'thesis_research', 'PDFBOX-v5')
+                          'Documents', 'thesis_research', 'Apache_pdfbox', 'pdfbox')
 PDFBOX_DIR = os.path.join(BASE_DIR, 'pdfbox')
 
-GENERATED_TESTS_DIR = os.path.join(PDFBOX_DIR, 'generated_tests')
-PROMPTS_DIR         = os.path.join(BASE_DIR, 'prompts')
-RESPONSES_DIR       = os.path.join(BASE_DIR, 'responses')
-RESULTS_DIR         = os.path.join(BASE_DIR, 'results')
+GENERATED_TESTS_DIR = os.path.join(PDFBOX_DIR, 'generated_tests_v2_gpt4omini')
+LOGFILES_DIR = os.path.join(BASE_DIR,'logfiles_v2_gpt4omini')
+PROMPTS_DIR         = os.path.join(LOGFILES_DIR, 'prompts')
+RESPONSES_DIR       = os.path.join(LOGFILES_DIR, 'responses')
+RESULTS_DIR         = os.path.join(LOGFILES_DIR, 'results')
 RESULTS_JSON        = os.path.join(RESULTS_DIR, 'results.json')
 FINAL_REPORT        = os.path.join(RESULTS_DIR, 'final_report.txt')
-INPUT_JSON          = os.path.join(BASE_DIR, 'extracted_metadata_final.json')
+INPUT_JSON          = os.path.join(BASE_DIR, 'metadata_methods_50.json')
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # ============================================
 # LLM SETTINGS
