@@ -7,25 +7,18 @@ load_dotenv()
 import os
 
 BASE_DIR   = os.path.join('C:\\', 'Users', 'Harini',
-                          'Documents', 'thesis_research', 'PDFBOX-v5')
+                          'Documents', 'thesis_research', 'Apache_pdfbox', 'pdfbox')
 PDFBOX_DIR = os.path.join(BASE_DIR, 'pdfbox')
 
-GENERATED_TESTS_DIR = os.path.join(PDFBOX_DIR, 'generated_tests')
-PROMPTS_DIR         = os.path.join(BASE_DIR, 'prompts')
-RESPONSES_DIR       = os.path.join(BASE_DIR, 'responses')
-PLANS_DIR           = os.path.join(BASE_DIR, 'plans')
-RESULTS_DIR         = os.path.join(BASE_DIR, 'results')
+GENERATED_TESTS_DIR = os.path.join(PDFBOX_DIR, 'generated_tests_v2_gpt4omini')
+LOGFILES_DIR = os.path.join(BASE_DIR,'logfiles_v2_gpt4omini')
+PROMPTS_DIR         = os.path.join(LOGFILES_DIR, 'prompts')
+RESPONSES_DIR       = os.path.join(LOGFILES_DIR, 'responses')
+RESULTS_DIR         = os.path.join(LOGFILES_DIR, 'results')
 RESULTS_JSON        = os.path.join(RESULTS_DIR, 'results.json')
 FINAL_REPORT        = os.path.join(RESULTS_DIR, 'final_report.txt')
-INPUT_JSON          = os.path.join(BASE_DIR, 'extracted_metadata_final.json')
-TEST_RESOURCES_DIR  = os.path.join(PDFBOX_DIR, 'src', 'test', 'resources')
-
-GENERATOR_DIR          = os.path.join(os.path.dirname(BASE_DIR), 'test_generator')
-DEPENDENCY_CHAINS_FILE = os.path.join(GENERATOR_DIR, 'dependency_chains.json')
-CALL_GRAPH_FILE        = os.path.join(PDFBOX_DIR, 'call_graph.json')
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-VERTEX_PROJECT  = "project-4b6556ed-0771-4944-982"
-VERTEX_LOCATION = "us-central1"
+INPUT_JSON          = os.path.join(BASE_DIR, 'metadata_methods_50.json')
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # ============================================
 # LLM SETTINGS
 # ============================================
