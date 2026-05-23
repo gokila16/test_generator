@@ -11,25 +11,56 @@ def get_package_from_full_name(full_name):
     Extracts package from full method name
     org.apache.pdfbox.multipdf.PDFMergerUtility.appendDocument
     -> org.apache.pdfbox.multipdf
+
+    NOTE: incorrect for inner-class methods. Prefer get_package_for_method,
+    which resolves the package via class_inventory.
     """
     parts = full_name.split('.')
     package_parts = parts[:-2]
     return '.'.join(package_parts)
+
+def get_package_for_method(full_name, class_inventory=None):
+    """
+    Resolves the package for a method's containing class, correctly handling
+    inner classes.
+
+    For top-level methods:
+      org.apache.pdfbox.Loader.loadFDF -> org.apache.pdfbox
+    For inner-class methods:
+      org.apache.pdfbox.pdfparser.PDFXrefStreamParser.ObjectNumbers.hasNext
+      -> org.apache.pdfbox.pdfparser   (NOT ...pdfparser.PDFXrefStreamParser)
+
+    Walks back through full_name finding the longest prefix that matches a
+    class FQN in class_inventory, and returns that class's package_name.
+    Falls back to stripping the last two segments when the inventory is
+    unavailable or the class is not registered — matching legacy behavior
+    for top-level classes.
+    """
+    if class_inventory:
+        parts = full_name.split('.')
+        # parts[-1] is the method name; try class FQNs of decreasing length.
+        for cut in range(len(parts) - 1, 0, -1):
+            cls_fqn = '.'.join(parts[:cut])
+            entry = class_inventory.get(cls_fqn)
+            if entry is not None:
+                pkg = entry.get('package_name')
+                if pkg is not None:
+                    return pkg
+    return '.'.join(full_name.split('.')[:-2])
 
 def get_test_class_name(class_name, method_name, index=None):
     if index is not None:
         return f"{class_name}_{method_name}_{index}_Test"
     return f"{class_name}_{method_name}_Test"
 
-def get_test_destination(full_name, class_name, method_name, overload_index=None):
+def get_test_destination(full_name, class_name, method_name, overload_index=None, class_inventory=None):
     """
     Gets destination path in src/test/java matching package structure
     e.g. org.apache.pdfbox.multipdf.PDFMergerUtility.appendDocument
     -> src/test/java/org/apache/pdfbox/multipdf/PDFMergerUtility_appendDocument_Test.java
     """
-    parts = full_name.split('.')
-    package_parts = parts[:-2]  # remove class name and method name
-    package_path = os.path.join(*package_parts) if package_parts else ''
+    package = get_package_for_method(full_name, class_inventory)
+    package_path = os.path.join(*package.split('.')) if package else ''
 
     if package_path:
         dest_dir = os.path.join(
@@ -83,11 +114,10 @@ def save_plan(plans_dir, full_name, plan):
         f.write(plan or '')
     return path
 
-def save_test_file(generated_tests_dir, full_name, class_name, method_name, java_code, overload_index=None):
+def save_test_file(generated_tests_dir, full_name, class_name, method_name, java_code, overload_index=None, class_inventory=None):
     """Saves generated Java test file organized into package subdirectories"""
-    parts = full_name.split('.')
-    package_parts = parts[:-2]  # remove class name and method name
-    package_path = os.path.join(*package_parts) if package_parts else ''
+    package = get_package_for_method(full_name, class_inventory)
+    package_path = os.path.join(*package.split('.')) if package else ''
     dest_dir = os.path.join(generated_tests_dir, package_path) if package_path else generated_tests_dir
     os.makedirs(dest_dir, exist_ok=True)
     test_class = get_test_class_name(class_name, method_name, overload_index)

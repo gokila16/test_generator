@@ -115,6 +115,18 @@ def _build_allowlist(method):
                 if key not in allowed:
                     allowed[key] = []
                 allowed[key].append(param_types)
+
+    # Always allow the SUT method itself: the test is supposed to invoke it.
+    # Without this, `instance.<sut_method>(...)` is flagged whenever the SUT
+    # class also appears in dep_classes (because the SUT calls a sibling
+    # method on its own class), since dependency_signatures lists callees.
+    sut_class  = method.get('class_name')
+    sut_method = method.get('method_name')
+    sut_sig    = method.get('signature') or ''
+    if sut_class and sut_method and sut_method != sut_class:
+        key = (sut_class, sut_method)
+        sut_param_types = _parse_param_types(sut_sig)
+        allowed.setdefault(key, []).append(sut_param_types)
     return allowed
 
 
@@ -219,12 +231,17 @@ def _build_inventory_class_names(method):
 
 def _build_inventory_method_allowlist(method, class_inventory):
     """
-    Builds a set of (class_name, method_name) pairs from the public_methods
-    list in class_inventory for every class in source_file_imports.
+    Builds a map of simple class_name -> set of public method names from
+    class_inventory, covering:
+      - every class in source_file_imports
+      - the SUT class itself (no self-import in Java)
+      - every class referenced in dependency_signatures (callee FQN ->
+        class FQN), which catches same-package classes that the SUT does
+        not need to import (e.g. COSDictionary when the SUT is COSArray —
+        both in org.apache.pdfbox.cos)
 
-    Used to validate calls on inventory classes — the LLM can call any method
-    listed here, but hallucinated names that don't exist in public_methods
-    are flagged.
+    Used to validate calls on inventory classes — the LLM can call any
+    method listed here without it being flagged as hallucinated.
 
     Returns an empty dict if class_inventory is not provided.
     """
@@ -235,25 +252,43 @@ def _build_inventory_method_allowlist(method, class_inventory):
     import_pattern = re.compile(r'import\s+([\w.]+);')
     method_name_pattern = re.compile(r'\b([A-Za-z_][A-Za-z0-9_]*)\s*\(')
 
-    allowed = {}   # class_name (simple) -> set of method names
-    for imp in method.get('source_file_imports', []):
-        m = import_pattern.search(imp)
-        if not m:
-            continue
-        full_name = m.group(1)
+    allowed: dict = {}   # simple class_name -> set of method names
+
+    def _add_class(full_name: str) -> None:
+        if not full_name:
+            return
         entry = class_inventory.get(full_name)
         if not entry:
-            continue
+            return
         simple = entry.get('class_name', full_name.split('.')[-1])
-        method_names = set()
+        bucket = allowed.setdefault(simple, set())
         for sig in entry.get('public_methods', []):
             mn = method_name_pattern.search(sig)
             if mn:
-                method_names.add(mn.group(1))
-        # Also allow factory method names
+                bucket.add(mn.group(1))
         for fm in entry.get('factory_methods', []):
-            method_names.add(fm['name'])
-        allowed[simple] = method_names
+            bucket.add(fm['name'])
+
+    # 1. Imported classes
+    for imp in method.get('source_file_imports', []):
+        m = import_pattern.search(imp)
+        if m:
+            _add_class(m.group(1))
+
+    # 2. The SUT class itself — derive FQN from method.full_name minus the
+    # method name. Java does not require self-imports, so the SUT class is
+    # not in source_file_imports.
+    full = method.get('full_name', '')
+    mname = method.get('method_name', '')
+    if full and mname and full.endswith('.' + mname):
+        _add_class(full[: -(len(mname) + 1)])
+
+    # 3. Dep classes referenced via dependency_signatures.full_name
+    for d in method.get('dependency_signatures', []):
+        callee_fqn = d.get('full_name', '')
+        if '.' in callee_fqn:
+            _add_class(callee_fqn.rsplit('.', 1)[0])
+
     return allowed
 
 
@@ -418,7 +453,16 @@ def check_against_allowlist(java_code, method, class_inventory=None):
         key = (resolved_class, called_method)
         qualified = f"{resolved_class}.{called_method}"
         if key not in allowlist:
-            # HALLUCINATED_METHOD: the method does not exist in dependency_signatures
+            # Fall back to class_inventory.public_methods before flagging.
+            # dependency_signatures only lists callees of the SUT method, but
+            # tests legitimately call other public methods on dep classes for
+            # fixture setup (e.g. dict.setItem(...) when the SUT only calls
+            # dict.getCOSArray()). Without this fallback, every such setup
+            # call is flagged as hallucinated.
+            inv_methods = inventory_method_allowlist.get(resolved_class)
+            if inv_methods and called_method in inv_methods:
+                continue
+            # HALLUCINATED_METHOD: not in dep allowlist and not in inventory
             if qualified not in seen:
                 seen.add(qualified)
                 violations.append(qualified)

@@ -12,13 +12,15 @@ from src.allowlist_checker import check_against_allowlist, validate_imports
 from src.llm_client import call_llm
 from src.code_extractor import extract_java_code
 from src.file_manager import (save_prompt, save_response, save_plan,
-                               save_test_file, get_test_class_name)
+                               save_test_file, get_test_class_name,
+                               get_package_for_method)
 from src.maven_runner import compile_and_run
 from src.result_tracker import (load_results, save_result,
                                  is_already_processed)
 from src.reporter import print_progress, print_final_report
 from src.context_loader import load_context_data, load_class_inventory, get_dependency_chain, get_caller_snippets
 from src.java_post_processor import post_process_java, apply_java_fixes
+from src.cfg_slicer import slice_method, get_testable_slices
 
 def _extract_and_process(response_text, class_inventory=None, **pp_kwargs):
     """
@@ -137,7 +139,7 @@ def _print_comparison_table(before_counts, after_results):
     print("=" * 58)
 
 
-def run_pipeline(skip_set=None):
+def run_pipeline(skip_set=None, only=None):
     if skip_set is None:
         skip_set = set()
     start_time = datetime.now()
@@ -159,7 +161,17 @@ def run_pipeline(skip_set=None):
     existing      = load_results(config.RESULTS_JSON)
     before_counts = Counter(v.get('status', 'UNKNOWN') for v in existing.values())
 
-    if skip_set:
+    if only:
+        # Run only the method(s) matching the given full_name or unique_key,
+        # ignoring any existing results (always re-run them).
+        remaining = [m for m in methods
+                     if m['full_name'] == only or m['unique_key'] == only]
+        if not remaining:
+            print(f"--only: no method matched '{only}'.")
+            return
+        print(f"--only mode: running {len(remaining)} method(s) matching '{only}' "
+              f"(ignoring existing results)")
+    elif skip_set:
         # Re-run every method that is NOT in the skip list, even if it was
         # previously processed.  Methods in skip_set keep their existing results.
         remaining = [m for m in methods if m['unique_key'] not in skip_set]
@@ -182,14 +194,21 @@ def run_pipeline(skip_set=None):
         overload_index = method['overload_index']
         test_class      = get_test_class_name(class_name, method_name, overload_index)
         base_test_class = get_test_class_name(class_name, method_name)   # what the LLM always generates
-        package         = '.'.join(full_name.split('.')[:-2])
+        package         = get_package_for_method(full_name, class_inventory)
 
         print(f"\n[{i+1}/{len(remaining)}] {method_name}")
 
         # ---- STEP 1: PLANNING ----
         dep_chain       = get_dependency_chain(dep_chains, method)
         caller_snippets = get_caller_snippets(call_graph, method, max_snippets=2)
-        plan_prompt     = build_planning_prompt(method, dep_chain=dep_chain, caller_snippets=caller_snippets, class_inventory=class_inventory)
+        try:
+            testable_slices = get_testable_slices(
+                slice_method(method.get('body', ''), method, class_inventory)
+            )
+        except Exception as exc:
+            print(f"  WARNING: method slicing failed for {method_name}: {exc}")
+            testable_slices = []
+        plan_prompt     = build_planning_prompt(method, dep_chain=dep_chain, caller_snippets=caller_snippets, class_inventory=class_inventory, testable_slices=testable_slices)
         plan_response, _trunc = call_llm(plan_prompt, method_name=method_name)
         if _trunc:
             truncation_count += 1
@@ -207,7 +226,7 @@ def run_pipeline(skip_set=None):
             continue
 
         # ---- STEP 2: GENERATION FROM PLAN ----
-        gen_prompt = build_generation_from_plan_prompt(method, plan_response, dep_chain=dep_chain)
+        gen_prompt = build_generation_from_plan_prompt(method, plan_response, dep_chain=dep_chain, class_inventory=class_inventory)
         response, _trunc = call_llm(gen_prompt, method_name=method_name)
         if _trunc:
             truncation_count += 1
@@ -237,7 +256,7 @@ def run_pipeline(skip_set=None):
                 # ---- TIER 1 / 2: targeted recovery prompt anchored on the plan ----
                 print(f"  Attempting recovery prompt...")
                 recovery_prompt = build_recovery_prompt(
-                    fail_reason, response, method, plan_response
+                    fail_reason, response, method, plan_response, class_inventory=class_inventory
                 )
                 recovery_response, _trunc = call_llm(recovery_prompt, method_name=method_name)
                 if _trunc:
@@ -343,11 +362,11 @@ def run_pipeline(skip_set=None):
             java_code = java_code.replace(base_class, index_class)
 
         # Save test file
-        test_path = save_test_file(config.GENERATED_TESTS_DIR, full_name, class_name, method_name, java_code, overload_index)
+        test_path = save_test_file(config.GENERATED_TESTS_DIR, full_name, class_name, method_name, java_code, overload_index, class_inventory=class_inventory)
 
         # Compile and run
         compiled, passed, error = compile_and_run(
-            test_path, full_name, class_name, method_name, overload_index
+            test_path, full_name, class_name, method_name, overload_index, class_inventory=class_inventory
         )
 
         # ---- RETRY UP TO 2 TIMES IF FAILED ----
@@ -454,10 +473,10 @@ def run_pipeline(skip_set=None):
                 retry_java = retry_java.replace(base_class, index_class)
             java_code = retry_java
             test_path = save_test_file(
-                config.GENERATED_TESTS_DIR, full_name, class_name, method_name, retry_java, overload_index
+                config.GENERATED_TESTS_DIR, full_name, class_name, method_name, retry_java, overload_index, class_inventory=class_inventory
             )
             compiled, passed, error = compile_and_run(
-                test_path, full_name, class_name, method_name, overload_index
+                test_path, full_name, class_name, method_name, overload_index, class_inventory=class_inventory
             )
             retry_succeeded = compiled and passed
 
@@ -500,6 +519,12 @@ if __name__ == '__main__':
         metavar='PATH',
         help='JSON file containing unique_keys to skip (preserve existing PASSED results)',
     )
+    parser.add_argument(
+        '--only',
+        metavar='FULL_NAME',
+        help='Run only the method(s) with this full_name (or unique_key), '
+             'ignoring existing results. Useful for testing a single method.',
+    )
     args = parser.parse_args()
 
     skip_set = set()
@@ -508,4 +533,4 @@ if __name__ == '__main__':
             skip_set = set(json.load(fh))
         print(f"Loaded {len(skip_set)} keys to skip from {args.skip_file}")
 
-    run_pipeline(skip_set=skip_set)
+    run_pipeline(skip_set=skip_set, only=args.only)

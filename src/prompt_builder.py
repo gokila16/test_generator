@@ -2,6 +2,7 @@ import re
 import config
 from src.behavioral_analyzer import extract_behavioral_constraints, extract_branches
 from src.resource_scanner import is_file_dependent, scan_test_resources
+from src.file_manager import get_package_for_method
 
 
 def _format_imports(method):
@@ -289,7 +290,7 @@ def _format_pre_computed_facts(method, testable_slices=None):
       - Branch structure (if-condition → taken/not-taken outcomes)
       - Literal return values per conditional path
       - Throw conditions with their guard predicates
-      - Ternary return paths from method slicing
+      - Behavioral slices from method slicing (throw / return / branch / loop)
 
     Presenting these as facts rather than asking the LLM to trace code is the
     primary defence against oracle hallucination.
@@ -345,17 +346,26 @@ def _format_pre_computed_facts(method, testable_slices=None):
         lines.extend(return_lines)
         lines.append("")
 
-    # Ternary paths from method slicing
-    ternary_slices = [
-        s for s in (testable_slices or [])
-        if s.get('slice_type') == 'RETURN_SLICE'
-        and ('is true' in s.get('entry_condition', '')
-             or 'is false' in s.get('entry_condition', ''))
-    ]
-    if ternary_slices:
-        lines.append("Ternary return paths (from method slicing — one test required per line):")
-        for s in ternary_slices:
-            lines.append(f"  When {s['entry_condition']}: {s['expected_observable']}")
+    # Behavioral slices from method slicing (cfg_slicer.py): each slice is one
+    # independently testable path with a suggested observable to assert.
+    slices = testable_slices or []
+    if slices:
+        _SLICE_LABELS = {
+            'THROW_SLICE':    'exception path',
+            'RETURN_SLICE':   'return path',
+            'BRANCH_SLICE':   'branch path',
+            'LOOP_SLICE':     'loop behavior',
+            'MUTATION_SLICE': 'state mutation',
+        }
+        lines.append("Behavioral slices (from method slicing - aim for one test per slice):")
+        for s in slices:
+            label = _SLICE_LABELS.get(s.get('slice_type'), s.get('slice_type', 'slice'))
+            sid   = s.get('slice_id', '?')
+            cond  = (s.get('entry_condition') or '').strip()
+            obs   = (s.get('expected_observable') or '').strip()
+            lines.append(f"  [{sid}] {label}: when {cond}")
+            if obs:
+                lines.append(f"        -> assert: {obs}")
         lines.append("")
 
     if len(lines) <= 4:
@@ -606,6 +616,12 @@ PLANNED IMPORTS (only what YOUR test methods actually need — not everything fr
 ...
 
 TEST METHODS (one test per path — every path must be tested):
+Naming convention (preferred, not required): <whatIsBeingTested>_<condition>_<expectedOutcome>
+  Examples: loadFDF_nullFile_throwsIllegalArgumentException
+            loadFDF_validResource_returnsParsedDocument
+            getPassword_emptyName_returnsEmptyString
+A descriptive name is the test's documentation — if the name is good, almost no comments are needed.
+
 1. <camelCaseTestName>
    Tests path: <Path N — which execution path this exercises>
    Regression caught: <what bug this catches — e.g. "fails if null guard is removed">
@@ -630,7 +646,7 @@ Output the plan now:"""
     return prompt
 
 
-def build_generation_from_plan_prompt(method, plan, dep_chain=None):
+def build_generation_from_plan_prompt(method, plan, dep_chain=None, class_inventory=None):
     """
     Step 2 of 2: asks the LLM to generate the test class by implementing the plan exactly.
     Imports are restricted to exactly what was listed in the plan.
@@ -638,7 +654,7 @@ def build_generation_from_plan_prompt(method, plan, dep_chain=None):
     direct reference — the model does not have to re-read them from the plan text.
     """
     test_class_name = f"{method['class_name']}_{method['method_name']}_Test"
-    package = '.'.join(method['full_name'].split('.')[:-2])
+    package = get_package_for_method(method['full_name'], class_inventory)
     resource_block = _format_resource_block(method)
     construction_section = _format_construction_section(dep_chain)
 
@@ -702,6 +718,36 @@ Signature: {method.get('signature', '')}
 14. The class under test is `{method['class_name']}`. It MUST appear as a type, constructor call,
     or static reference in the code body — not just in an import.
 15. If the method throws a checked exception, declare `throws <ExceptionType>` on the test method.
+
+=== COMMENTS & NAMING ===
+The test method name IS the documentation. A descriptive name removes the need for comments.
+Preferred pattern (not required): <whatIsBeingTested>_<condition>_<expectedOutcome>
+  e.g. loadFDF_nullFile_throwsIllegalArgumentException
+       getPassword_emptyName_returnsEmptyString
+
+Comment rules — keep them MINIMAL and PURPOSEFUL:
+- DO NOT write comments that restate what the next line of code does.
+  BAD:  // Construct the input file
+        File f = new File(...);
+  BAD:  // Call the method under test
+        FDFDocument result = Loader.loadFDF(f);
+  BAD:  // Assert the expected exception is thrown
+        assertThrows(IOException.class, () -> ...);
+- DO NOT write Javadoc, @author tags, file headers, "Test class for X" headers,
+  or section banners (// ---- Setup ----, // ---- Act ----, // ---- Assert ----).
+- DO NOT write "Arrange/Act/Assert" comments. The structure is obvious from the code.
+
+When a comment IS warranted (only these four cases):
+1. Non-obvious setup — explain WHY a value is constructed this way if it isn't clear.
+   e.g. // password is "" because the file uses an owner password, not a user password
+2. Non-obvious expected value — explain WHY the expected value is what it is, when
+   the value itself doesn't make that clear.
+   e.g. // expected 7 pages: cweb.pdf has 8 pages but page 0 is the cover (excluded)
+3. Intentionally surprising input — flag inputs chosen to expose a known edge case.
+   e.g. // Integer.MIN_VALUE: triggers the overflow path in the size calculation
+4. Workaround for a real constraint — e.g. why a try/catch is needed, why a value is cast.
+
+If none of those four apply, write NO comment. Trust the test name and the code.
 
 === OUTPUT FORMAT ===
 Output ONLY the raw Java source code starting with the package declaration. No explanations, no markdown fences.
@@ -778,7 +824,7 @@ def build_retry_prompt(error_message, failing_test, method,
         dep_chain: optional dep_chain entry for construction guidance
     """
     test_class_name = f"{method['class_name']}_{method['method_name']}_Test"
-    package = '.'.join(method['full_name'].split('.')[:-2])
+    package = get_package_for_method(method['full_name'], class_inventory)
     import_section = _format_imports(method)
     dep_section = _format_dependency_signatures(method)
 
@@ -905,7 +951,7 @@ def build_allowlist_violation_prompt(violations, generated_test, method,
         class_inventory: optional class inventory dict (passed through to _format_inventory_for_retry)
     """
     test_class_name = f"{method['class_name']}_{method['method_name']}_Test"
-    package = '.'.join(method['full_name'].split('.')[:-2])
+    package = get_package_for_method(method['full_name'], class_inventory)
     import_section = _format_imports(method)
 
     # Build full allowlist section from all dependency_signatures
@@ -1095,7 +1141,7 @@ _RECOVERY_INSTRUCTIONS = {
 }
 
 
-def build_recovery_prompt(fail_reason, bad_response, method, plan):
+def build_recovery_prompt(fail_reason, bad_response, method, plan, class_inventory=None):
     """
     Builds a targeted recovery prompt when extraction/post-processing rejected
     the generation response (Tier 1: no usable code; Tier 2: Maven won't catch it).
@@ -1112,7 +1158,7 @@ def build_recovery_prompt(fail_reason, bad_response, method, plan):
     class_name  = method.get('class_name', '')
     method_name = method.get('method_name', '')
     test_class_name = f"{class_name}_{method_name}_Test"
-    package = '.'.join(method.get('full_name', '').split('.')[:-2])
+    package = get_package_for_method(method.get('full_name', ''), class_inventory)
 
     raw_instruction = _RECOVERY_INSTRUCTIONS.get(
         fail_reason,

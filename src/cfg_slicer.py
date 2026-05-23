@@ -26,7 +26,7 @@ except ImportError:  # pragma: no cover
 # ─── slice ID generator ────────────────────────────────────────────────────
 
 def _slice_ids():
-    """Yields A, B, C, …, Z, AA, AB, … deterministically."""
+    """Yields A, B, C, ..., Z, AA, AB, ... deterministically."""
     for letter in string.ascii_uppercase:
         yield letter
     for prefix in string.ascii_uppercase:
@@ -86,7 +86,7 @@ _RETURN_TYPE_RE = re.compile(
 
 def _nearest_if_condition(body: str, pos: int, lookback: int = 300) -> Optional[str]:
     """
-    Finds the nearest enclosing ``if (…)`` guard that precedes *pos* within
+    Finds the nearest enclosing ``if (...)`` guard that precedes *pos* within
     *lookback* characters, and returns the balanced condition text, or None.
     """
     window_start = max(0, pos - lookback)
@@ -215,7 +215,7 @@ def _construction(simple_type: str, inventory: dict) -> tuple:
                 sub_expr, sub_conf = _construction(sub_simple, inventory)
                 return sub_expr, 'medium'
         return (
-            f'/* TODO: {base_type} is abstract/interface — '
+            f'/* TODO: {base_type} is abstract/interface - '
             f'pick a concrete subclass from class_inventory */',
             'low',
         )
@@ -288,9 +288,9 @@ def _condition_hints(condition: str, params: list) -> dict:
     """
     Derives forced param values from a guard condition.
 
-    ``key == null``         → ``{"key": "null"}``
-    ``value.isEmpty()``     → ``{"value": '""'}``
-    ``len.length() == 0``   → ``{"len": '""'}``
+    ``key == null``         -> ``{"key": "null"}``
+    ``value.isEmpty()``     -> ``{"value": '""'}``
+    ``len.length() == 0``   -> ``{"len": '""'}``
     """
     if not condition:
         return {}
@@ -357,7 +357,7 @@ def _is_trivial_body(body: str) -> bool:
     stripped = body.strip().strip('{}').strip()
     if not stripped:
         return True
-    # super(args); or this(args); — pure delegation, nothing to test here
+    # super(args); or this(args); - pure delegation, nothing to test here
     if re.fullmatch(r'(?:super|this)\s*\([^)]*\)\s*;', stripped):
         return True
     # Just a semicolon or only whitespace
@@ -431,8 +431,8 @@ def _extract_return_slices(body: str, params: list, method_name: str,
                             inventory: dict, ids) -> list:
     """
     Extracts RETURN_SLICE for:
-      1. Literal returns (true/false/null/string/number) — confidence=high
-      2. ``return new Type(...)`` returns — confidence=medium
+      1. Literal returns (true/false/null/string/number) - confidence=high
+      2. ``return new Type(...)`` returns - confidence=medium
     """
     result = []
     seen_keys: set = set()
@@ -462,7 +462,7 @@ def _extract_return_slices(body: str, params: list, method_name: str,
             'skip_reason':        None,
         })
 
-    # 2. return new Type(...) — object construction returns
+    # 2. return new Type(...) - object construction returns
     for m in _RETURN_NEW_RE.finditer(body):
         type_name = m.group(1)
         key = f'new:{type_name}'
@@ -474,7 +474,7 @@ def _extract_return_slices(body: str, params: list, method_name: str,
         hints = _condition_hints(condition, params) if condition else {}
         recipe, _conf = _recipe(params, inventory, hints)
 
-        # Cannot statically derive exact field values — require LLM reasoning
+        # Cannot statically derive exact field values - require LLM reasoning
         observable = (
             f'assertNotNull(result);  '
             f'// additionally: verify result.get*() fields match expected {type_name} state '
@@ -607,13 +607,13 @@ def _extract_loop_slices(body: str, params: list, inventory: dict, ids) -> list:
             'slice_type':         'LOOP_SLICE',
             'loop_variant':       'empty',
             'entry_condition':    (
-                f'zero iterations — empty/null collection input '
+                f'zero iterations - empty/null collection input '
                 f'(loop: {entry_cond})'
             ),
             'input_recipe':       empty_recipe,
             'expected_observable': (
                 'assertEquals(0, result.size())  '
-                '// or equivalent zero-iteration assertion — '
+                '// or equivalent zero-iteration assertion - '
                 'derive exact check from method body'
             ),
             'confidence':         'medium',
@@ -624,13 +624,13 @@ def _extract_loop_slices(body: str, params: list, inventory: dict, ids) -> list:
             'slice_type':         'LOOP_SLICE',
             'loop_variant':       'single',
             'entry_condition':    (
-                f'one iteration — single-element collection input '
+                f'one iteration - single-element collection input '
                 f'(loop: {entry_cond})'
             ),
             'input_recipe':       single_recipe,
             'expected_observable': (
                 'assertEquals(1, result.size())  '
-                '// or equivalent single-iteration assertion — '
+                '// or equivalent single-iteration assertion - '
                 'derive exact check from method body'
             ),
             'confidence':         'medium',

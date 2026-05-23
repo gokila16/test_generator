@@ -5,7 +5,7 @@ import sys
 import shutil
 import subprocess
 import config
-from src.file_manager import get_test_destination, get_test_class_name
+from src.file_manager import get_test_destination, get_test_class_name, get_package_for_method
 
 
 def _clean_stale_generated_tests(pdfbox_dir):
@@ -133,13 +133,13 @@ def _remove_test_methods(java_source, method_names):
     return '\n'.join(result_lines)
 
 
-def compile_and_run(test_file_path, full_name, class_name, method_name, overload_index=None):
+def compile_and_run(test_file_path, full_name, class_name, method_name, overload_index=None, class_inventory=None):
     dest_dir, filename = get_test_destination(
-        full_name, class_name, method_name, overload_index
+        full_name, class_name, method_name, overload_index, class_inventory=class_inventory
     )
     dest_path = os.path.join(dest_dir, filename)
     test_class_name = get_test_class_name(class_name, method_name, overload_index)
-    package = '.'.join(full_name.split('.')[:-2])
+    package = get_package_for_method(full_name, class_inventory)
     fqcn = f"{package}.{test_class_name}" if package else test_class_name
     package_path = os.path.join(*package.split('.')) if package else ''
     class_file = os.path.normpath(os.path.join(

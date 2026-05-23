@@ -20,6 +20,16 @@ FINAL_REPORT        = os.path.join(RESULTS_DIR, 'final_report.txt')
 INPUT_JSON          = os.path.join(BASE_DIR, 'extracted_metadata_final.json')
 TEST_RESOURCES_DIR  = os.path.join(PDFBOX_DIR, 'src', 'test', 'resources')
 
+# ============================================
+# METHOD SELECTION
+# ============================================
+# When True, the pipeline processes ALL 1309 methods (including the 377 that
+# already have developer tests). When False, only the 932 uncovered methods run
+# (original behavior). For the 377 developer-tested methods to receive proper
+# "HOW TO CONSTRUCT EACH INPUT" context, dependency_chains.json must be built
+# with UNCOVERED_ONLY = False in build_dependency_chains.py.
+INCLUDE_DEVELOPER_TESTED = True
+
 GENERATOR_DIR          = os.path.join(os.path.dirname(BASE_DIR), 'test_generator')
 DEPENDENCY_CHAINS_FILE = os.path.join(GENERATOR_DIR, 'dependency_chains.json')
 CALL_GRAPH_FILE        = os.path.join(PDFBOX_DIR, 'call_graph.json')

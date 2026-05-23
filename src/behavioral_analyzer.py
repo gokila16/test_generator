@@ -1,217 +1,305 @@
 """
 src/behavioral_analyzer.py
 
-Parses a Java method body string with regex to extract concrete behavioral
-contracts (thrown exceptions and literal return values) that the LLM can use
-as precise test-assertion targets rather than guessing from signatures.
+Parses a Java method body via the `javalang` AST to extract concrete behavioral
+contracts (thrown exceptions, literal return values, branch outcomes) that the
+LLM can use as precise test-assertion targets rather than guessing from
+signatures.
+
+Why AST instead of regex:
+  - String/char literals containing "throw new", "return", or "if (" are no
+    longer mistaken for code (the lexer handles them).
+  - Block and line comments are skipped automatically.
+  - Throw guards are determined by AST containment, not by text proximity, so
+    a sibling `if` near (but not enclosing) a throw is not misattributed.
+
+Public API (unchanged):
+  - extract_behavioral_constraints(method_body) -> dict
+  - extract_branches(method_body)               -> list
 """
 
-import re
+import javalang
+from javalang.tree import (
+    BlockStatement,
+    ClassCreator,
+    IfStatement,
+    Literal,
+    MethodDeclaration,
+    ReturnStatement,
+    ThrowStatement,
+)
 
-# Matches "throw new SomeException(" — re-throws ("throw e;") are excluded.
-_THROW_RE = re.compile(r'throw\s+new\s+([A-Z][A-Za-z0-9_]*)\s*\(')
-
-# Matches "return <literal>" where literal is a string, boolean, null, or
-# numeric (integer or decimal, with optional Java type suffix).
-_LITERAL_PAT = r'"(?:[^"\\]|\\.)*"|true\b|false\b|null\b|-?\d+(?:\.\d+)?[fFdDlL]?\b'
-_RETURN_RE   = re.compile(r'\breturn\s+(' + _LITERAL_PAT + r')', re.MULTILINE)
-
-# Matches the start of an if-block.
-_IF_RE = re.compile(r'\bif\s*\(')
-
-# Window (in characters) before a throw site to search for a guarding if.
-_CONDITION_LOOKBACK = 200
+_MAX_BRANCHES = 10
 
 
-def _extract_if_condition(body: str, throw_start: int):
+# ---------------------------------------------------------------------------
+# Parsing helpers
+# ---------------------------------------------------------------------------
+
+def _parse_body(method_body):
     """
-    Search the _CONDITION_LOOKBACK characters before *throw_start* for the
-    nearest ``if (…)`` guard and return the balanced condition text, or None
-    if no guard is found.
+    Wrap *method_body* in a dummy class+method and parse with javalang.
+
+    Returns (MethodDeclaration node, wrapped_source) on success, or
+    (None, None) if parsing fails.  The wrapped source is returned so callers
+    can use AST positions to slice condition text verbatim.
     """
-    window_start = max(0, throw_start - _CONDITION_LOOKBACK)
-    window = body[window_start:throw_start]
+    if not method_body or not method_body.strip():
+        return None, None
 
-    # Find the last 'if (' in the window (most immediately enclosing guard).
-    last_if = None
-    for m in re.finditer(r'if\s*\(', window):
-        last_if = m
+    body = method_body.strip()
+    if not body.startswith('{'):
+        body = '{ ' + body + ' }'
 
-    if last_if is None:
-        return None
+    # `throws Throwable` keeps javalang from rejecting unhandled checked
+    # exceptions in arbitrary snippets we receive.
+    wrapped = f'class _W_ {{ void _m_() throws Throwable {body} }}'
 
-    # Position of the opening '(' in the full body string.
-    paren_pos = window_start + last_if.end() - 1   # last_if.end() is past '('
+    try:
+        tree = javalang.parse.parse(wrapped)
+    except (javalang.parser.JavaSyntaxError,
+            javalang.tokenizer.LexerError,
+            Exception):  # noqa: BLE001 — broad catch is intentional; never raise on bad input
+        return None, None
 
-    # Walk forward, balancing parentheses.
+    for _, node in tree.filter(MethodDeclaration):
+        return node, wrapped
+    return None, None
+
+
+def _line_col_to_offset(source, line, col):
+    """Convert 1-indexed (line, col) to a 0-indexed character offset."""
+    offset = 0
+    cur_line = 1
+    while cur_line < line:
+        nl = source.find('\n', offset)
+        if nl == -1:
+            return -1
+        offset = nl + 1
+        cur_line += 1
+    return offset + (col - 1)
+
+
+def _balanced_paren_close(source, open_idx):
+    """
+    Walk forward from `(` at *open_idx* and return the index just past the
+    matching `)`.  Skips string literals, char literals, and comments so that
+    parens inside those are not counted.  Returns -1 if unbalanced.
+    """
     depth = 1
-    i = paren_pos + 1
-    while i < len(body) and depth > 0:
-        if body[i] == '(':
+    i = open_idx + 1
+    n = len(source)
+    while i < n and depth > 0:
+        c = source[i]
+
+        # Line comment
+        if c == '/' and i + 1 < n and source[i + 1] == '/':
+            nl = source.find('\n', i)
+            i = n if nl == -1 else nl + 1
+            continue
+        # Block comment
+        if c == '/' and i + 1 < n and source[i + 1] == '*':
+            end = source.find('*/', i + 2)
+            i = n if end == -1 else end + 2
+            continue
+        # String literal
+        if c == '"':
+            i += 1
+            while i < n and source[i] != '"':
+                i += 2 if source[i] == '\\' else 1
+            i += 1
+            continue
+        # Char literal
+        if c == "'":
+            i += 1
+            while i < n and source[i] != "'":
+                i += 2 if source[i] == '\\' else 1
+            i += 1
+            continue
+
+        if c == '(':
             depth += 1
-        elif body[i] == ')':
+        elif c == ')':
             depth -= 1
         i += 1
 
-    if depth != 0:          # unbalanced — malformed source, skip
-        return None
-
-    condition = body[paren_pos + 1 : i - 1].strip()
-    return condition if condition else None
-
-
-def _get_line(body: str, pos: int) -> str:
-    """Return the source line that contains *pos*, stripped of leading whitespace."""
-    line_start = body.rfind('\n', 0, pos) + 1          # 0 if no preceding newline
-    line_end   = body.find('\n', pos)
-    if line_end == -1:
-        line_end = len(body)
-    return body[line_start:line_end].strip()
-
-
-def extract_behavioral_constraints(method_body: str) -> dict:
-    """
-    Parse *method_body* and return a dict describing the concrete behaviors
-    that are directly readable from the source:
-
-    {
-      "throws": [
-        {"exception": "IOException", "condition": "fileName == null"}
-      ],
-      "returns": [
-        {"value": "true", "context": "return true;"}
-      ]
-    }
-
-    ``condition`` is None when no enclosing ``if`` guard is found within
-    _CONDITION_LOOKBACK characters.  The caller should decide whether to
-    surface condition-less throws.
-
-    Returns ``{"throws": [], "returns": []}`` for falsy input.
-    """
-    if not method_body:
-        return {"throws": [], "returns": []}
-
-    throws  = []
-    returns = []
-
-    for m in _THROW_RE.finditer(method_body):
-        exception = m.group(1)
-        condition = _extract_if_condition(method_body, m.start())
-        throws.append({"exception": exception, "condition": condition})
-
-    for m in _RETURN_RE.finditer(method_body):
-        value   = m.group(1)
-        context = _get_line(method_body, m.start())
-        returns.append({"value": value, "context": context})
-
-    return {"throws": throws, "returns": returns}
-
-
-def _balance_parens(body: str, open_pos: int) -> int:
-    """
-    Starting at the opening '(' at *open_pos*, return the index just past the
-    matching ')'.  Returns -1 if the parens are unbalanced.
-    """
-    depth = 1
-    i = open_pos + 1
-    while i < len(body) and depth > 0:
-        if body[i] == '(':
-            depth += 1
-        elif body[i] == ')':
-            depth -= 1
-        i += 1
     return i if depth == 0 else -1
 
 
-def _outcome_in_window(body: str, start: int, window: int = 300) -> str:
+def _condition_text(source, if_node):
     """
-    Scan up to *window* characters from *start* for the first throw or literal
-    return and return a description string, or 'continues execution' if neither
-    is found.
+    Verbatim if-condition text from *source*, anchored on the AST position of
+    *if_node*.  Returns the text inside the parens (stripped) or None.
     """
-    snippet = body[start:start + window]
-    throw_m  = re.search(r'throw\s+new\s+([A-Z][A-Za-z0-9_]*)', snippet)
-    return_m = re.search(r'\breturn\s+(' + _LITERAL_PAT + r')', snippet)
+    if if_node.position is None:
+        return None
+    offset = _line_col_to_offset(source, if_node.position.line, if_node.position.column)
+    if offset < 0:
+        return None
+    paren_open = source.find('(', offset)
+    if paren_open == -1:
+        return None
+    paren_close = _balanced_paren_close(source, paren_open)
+    if paren_close == -1:
+        return None
+    return source[paren_open + 1:paren_close - 1].strip() or None
 
-    if throw_m and return_m:
-        if throw_m.start() < return_m.start():
-            return f"throws {throw_m.group(1)}"
-        return f"returns {return_m.group(1)}"
-    if throw_m:
-        return f"throws {throw_m.group(1)}"
-    if return_m:
-        return f"returns {return_m.group(1)}"
 
-    # Check for a plain 'return;' (void method)
-    if re.search(r'\breturn\s*;', snippet):
-        return "returns (void)"
+def _line_at_offset(source, offset):
+    """Return the source line containing *offset*, stripped of surrounding whitespace."""
+    line_start = source.rfind('\n', 0, offset) + 1
+    line_end = source.find('\n', offset)
+    if line_end == -1:
+        line_end = len(source)
+    return source[line_start:line_end].strip()
+
+
+def _enclosing_if(path):
+    """Innermost IfStatement ancestor in *path*, or None if there is none."""
+    for ancestor in reversed(path):
+        if isinstance(ancestor, IfStatement):
+            return ancestor
+    return None
+
+
+def _is_throw_new(node):
+    """True iff *node* is `throw new X(...)` (excludes plain re-throws like `throw e`)."""
+    return (
+        isinstance(node, ThrowStatement)
+        and isinstance(node.expression, ClassCreator)
+        and node.expression.type is not None
+        and node.expression.type.name
+    )
+
+
+def _summarize_outcome(stmt):
+    """
+    Describe the immediate outcome of *stmt* (the body of an if-branch).
+
+    Returns one of:
+        "throws X"
+        "returns <literal>"
+        "returns (void)"
+        "continues execution"
+    """
+    if stmt is None:
+        return "continues execution"
+
+    # Walk into the first statement of a block.
+    while isinstance(stmt, BlockStatement) and stmt.statements:
+        stmt = stmt.statements[0]
+
+    if isinstance(stmt, ThrowStatement):
+        if (isinstance(stmt.expression, ClassCreator)
+                and stmt.expression.type is not None
+                and stmt.expression.type.name):
+            return f"throws {stmt.expression.type.name}"
+        return "continues execution"  # bare re-throw — no concrete contract
+
+    if isinstance(stmt, ReturnStatement):
+        if stmt.expression is None:
+            return "returns (void)"
+        if isinstance(stmt.expression, Literal):
+            return f"returns {stmt.expression.value}"
+        return "continues execution"  # non-literal return — no concrete contract
 
     return "continues execution"
 
 
-def extract_branches(method_body: str) -> list:
-    """
-    Statically extract the if-condition branches from *method_body*.
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
 
-    Returns a list of dicts:
+def extract_behavioral_constraints(method_body):
+    """
+    Parse *method_body* and return:
+
         {
-          "condition":      "x == null",
-          "taken":          "throws IllegalArgumentException",
-          "not_taken":      "continues execution"   # or None when unknown
+          "throws":  [{"exception": str, "condition": str | None}, ...],
+          "returns": [{"value":     str, "context":   str},        ...],
         }
 
-    Only if-blocks are captured.  The list preserves source order and is
-    capped at 10 branches so the prompt section stays concise.
+    `condition` is None for throws that have no enclosing `if` guard.
+    `value` is the literal token as it appears in source (booleans/null/numbers
+    plain; strings include their surrounding quotes).
+    Returns the empty shape on falsy input or unparseable source.
+    """
+    empty = {"throws": [], "returns": []}
+    if not method_body:
+        return empty
+
+    method, source = _parse_body(method_body)
+    if method is None:
+        return empty
+
+    throws = []
+    for path, node in method.filter(ThrowStatement):
+        if not _is_throw_new(node):
+            continue
+        guard = _enclosing_if(path)
+        condition = _condition_text(source, guard) if guard else None
+        throws.append({
+            "exception": node.expression.type.name,
+            "condition": condition,
+        })
+
+    returns = []
+    for _, node in method.filter(ReturnStatement):
+        expr = node.expression
+        if not isinstance(expr, Literal):
+            continue
+        if node.position is not None:
+            offset = _line_col_to_offset(source, node.position.line, node.position.column)
+            context = _line_at_offset(source, offset) if offset >= 0 else f"return {expr.value};"
+        else:
+            context = f"return {expr.value};"
+        returns.append({"value": expr.value, "context": context})
+
+    return {"throws": throws, "returns": returns}
+
+
+def extract_branches(method_body):
+    """
+    Statically extract if-branches from *method_body*.
+
+    Returns a list of dicts (capped at _MAX_BRANCHES, source order preserved):
+        {"condition": str, "taken": str, "not_taken": str | None}
+
+    `not_taken` is None when the if has no else clause.  Else-if chains report
+    the inner if as another entry in source order; the outer's not_taken stays
+    None because the AST else_statement is itself an IfStatement (no concrete
+    outcome at that level).
     """
     if not method_body:
         return []
 
-    branches = []
-    for m in _IF_RE.finditer(method_body):
-        # Position of the '(' that opens the condition.
-        paren_open = m.end() - 1   # _IF_RE ends just past '('
-        close = _balance_parens(method_body, paren_open)
-        if close == -1:
-            continue
+    method, source = _parse_body(method_body)
+    if method is None:
+        return []
 
-        condition = method_body[paren_open + 1: close - 1].strip()
+    branches = []
+    for _, if_node in method.filter(IfStatement):
+        condition = _condition_text(source, if_node)
         if not condition:
             continue
 
-        # What happens immediately inside the if-block (taken path)?
-        taken = _outcome_in_window(method_body, close)
-
-        # What happens after the if-block (not-taken path)?
-        # Scan forward past the closing brace of the if-body.
-        after_start = close
-        brace_m = re.search(r'\{', method_body[close:])
-        if brace_m:
-            brace_pos = close + brace_m.start()
-            depth = 1
-            i = brace_pos + 1
-            while i < len(method_body) and depth > 0:
-                if method_body[i] == '{':
-                    depth += 1
-                elif method_body[i] == '}':
-                    depth -= 1
-                i += 1
-            after_start = i
-
-        # Check for else / else-if
-        else_m = re.match(r'\s*else\s*', method_body[after_start:after_start + 30])
-        if else_m:
-            not_taken = _outcome_in_window(method_body, after_start + else_m.end())
+        taken = _summarize_outcome(if_node.then_statement)
+        if if_node.else_statement is None:
+            not_taken = None
+        elif isinstance(if_node.else_statement, IfStatement):
+            # else-if — outer's "else" leads into another conditional; no
+            # single concrete outcome here.  The inner if appears as its own
+            # entry on the next iteration of the filter walk.
+            not_taken = None
         else:
-            not_taken = None   # unknown without else
+            not_taken = _summarize_outcome(if_node.else_statement)
 
         branches.append({
             "condition": condition,
             "taken":     taken,
             "not_taken": not_taken,
         })
-
-        if len(branches) >= 10:
+        if len(branches) >= _MAX_BRANCHES:
             break
 
     return branches

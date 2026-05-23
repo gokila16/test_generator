@@ -36,7 +36,7 @@ TEST_RESOURCES_DIR = r"C:\Users\Harini\Documents\thesis_research\PDFBOX-v5\pdfbo
 # extracted_metadata_final.json contains all 1309 methods with has_developer_tests field.
 # Setting UNCOVERED_ONLY = True filters to the 932 methods without developer tests,
 # which is what the test generator processes. Set to False to build chains for all 1309.
-UNCOVERED_ONLY = True
+UNCOVERED_ONLY = False
 
 # ── Java primitives and simple types ──────────────────────
 PRIMITIVES = {
