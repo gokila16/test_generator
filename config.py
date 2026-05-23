@@ -8,12 +8,17 @@ import os
 
 BASE_DIR   = os.path.join('C:\\', 'Users', 'Harini',
                           'Documents', 'thesis_research', 'PDFBOX-v5')
-PDFBOX_DIR = os.path.join(BASE_DIR, 'pdfbox')
-
-GENERATED_TESTS_DIR = os.path.join(PDFBOX_DIR, 'generated_tests')
-PROMPTS_DIR         = os.path.join(BASE_DIR, 'prompts')
-RESPONSES_DIR       = os.path.join(BASE_DIR, 'responses')
-RESULTS_DIR         = os.path.join(BASE_DIR, 'results')
+# Maven build dir for THIS pipeline. The PDFBOX-v5 copy above is in use by another
+# pipeline, so we compile/run tests in a separate pdfbox checkout. PDFBOX_REPO is the
+# multi-module repo root; PDFBOX_DIR is the nested `pdfbox` Maven module.
+PDFBOX_REPO = os.path.join('C:\\', 'Users', 'Harini', 'Documents',
+                           'thesis_research', 'testgenerator_v1', 'pdfbox')
+PDFBOX_DIR  = os.path.join(PDFBOX_REPO, 'pdfbox')   # actual pdfbox Maven module
+GENRATED_FILES = os.path.join(BASE_DIR, 'generated_files/gpt5mini-v1')
+GENERATED_TESTS_DIR = os.path.join(PDFBOX_DIR, 'generated_testsgpt5mini_v1')
+PROMPTS_DIR         = os.path.join(GENRATED_FILES, 'prompts')
+RESPONSES_DIR       = os.path.join(GENRATED_FILES, 'responses')
+RESULTS_DIR         = os.path.join(GENRATED_FILES, 'results')
 RESULTS_JSON        = os.path.join(RESULTS_DIR, 'results.json')
 FINAL_REPORT        = os.path.join(RESULTS_DIR, 'final_report.txt')
 INPUT_JSON          = os.path.join(BASE_DIR, 'extracted_metadata_final.json')
@@ -21,9 +26,15 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # ============================================
 # LLM SETTINGS
 # ============================================
-LLM_MODEL       = 'gpt-4o-mini'
-LLM_MAX_TOKENS  = 1500
+LLM_MODEL       = 'gpt-5-mini'
+# gpt-5 / o-series are reasoning models: this budget is shared by hidden reasoning
+# tokens AND the visible output, so keep it generous (sent as max_completion_tokens).
+LLM_MAX_TOKENS  = 16384
+# Reasoning models only allow the default temperature, so this is IGNORED for gpt-5
+# (handled in llm_client.py). Kept for non-reasoning fallback models.
 LLM_TEMPERATURE = 0
+# gpt-5 reasoning effort: 'minimal' | 'low' | 'medium' | 'high'.
+LLM_REASONING_EFFORT = 'low'
 API_SLEEP_SEC   = 1
 MAX_RETRIES = 2
 # ============================================
