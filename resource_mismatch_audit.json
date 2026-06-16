@@ -1,0 +1,146 @@
+{
+  "chains_path": "c:\\Users\\Harini\\Documents\\thesis_research\\test_generator_v7\\test_generator\\dependency_chains.json",
+  "resources_path": "c:\\Users\\Harini\\Documents\\thesis_research\\test_generator_v7\\test_generator\\test_resource_metadata.json",
+  "total_chain_entries": 1309,
+  "unique_chain_keys_with_mismatch": 6,
+  "total_param_mismatches": 6,
+  "signal_counts": {
+    "FDF": 3,
+    "CCITT": 2,
+    "XFDF": 1
+  },
+  "findings": [
+    {
+      "chain_key": "org.apache.pdfbox.Loader.loadFDF|public static FDFDocument loadFDF(File file) throws IOException",
+      "full_name": "org.apache.pdfbox.Loader.loadFDF",
+      "class_name": "Loader",
+      "method_name": "loadFDF",
+      "signature": "public static FDFDocument loadFDF(File file) throws IOException",
+      "resolution_quality": "full",
+      "signal_token": "FDF",
+      "signal_source": "method_name",
+      "param_findings": [
+        {
+          "param_index": 0,
+          "param_name": "file",
+          "param_type": "File",
+          "actual_resource": "input/cweb.pdf",
+          "actual_extension": ".pdf",
+          "expected_extension": ".fdf",
+          "proposed_replacement": "org/apache/pdfbox/pdfparser/nocatalog.fdf",
+          "replacement_available": true
+        }
+      ]
+    },
+    {
+      "chain_key": "org.apache.pdfbox.Loader.loadFDF|public static FDFDocument loadFDF(InputStream input) throws IOException",
+      "full_name": "org.apache.pdfbox.Loader.loadFDF",
+      "class_name": "Loader",
+      "method_name": "loadFDF",
+      "signature": "public static FDFDocument loadFDF(InputStream input) throws IOException",
+      "resolution_quality": "full",
+      "signal_token": "FDF",
+      "signal_source": "method_name",
+      "param_findings": [
+        {
+          "param_index": 0,
+          "param_name": "input",
+          "param_type": "InputStream",
+          "actual_resource": "input/cweb.pdf",
+          "actual_extension": ".pdf",
+          "expected_extension": ".fdf",
+          "proposed_replacement": "org/apache/pdfbox/pdfparser/nocatalog.fdf",
+          "replacement_available": true
+        }
+      ]
+    },
+    {
+      "chain_key": "org.apache.pdfbox.filter.CCITTFaxFilter.decode|public DecodeResult decode(InputStream encoded, OutputStream decoded,\n                                         COSDictionary parameters, int index) throws IOException",
+      "full_name": "org.apache.pdfbox.filter.CCITTFaxFilter.decode",
+      "class_name": "CCITTFaxFilter",
+      "method_name": "decode",
+      "signature": "public DecodeResult decode(InputStream encoded, OutputStream decoded,\n                                         COSDictionary parameters, int index) throws IOException",
+      "resolution_quality": "partial",
+      "signal_token": "CCITT",
+      "signal_source": "class_name",
+      "param_findings": [
+        {
+          "param_index": 0,
+          "param_name": "encoded",
+          "param_type": "InputStream",
+          "actual_resource": "input/cweb.pdf",
+          "actual_extension": ".pdf",
+          "expected_extension": ".tif",
+          "proposed_replacement": "org/apache/pdfbox/pdmodel/graphics/image/ccittg4multi.tif",
+          "replacement_available": true
+        }
+      ]
+    },
+    {
+      "chain_key": "org.apache.pdfbox.pdmodel.fdf.FDFDocument.save|public void save(File fileName) throws IOException",
+      "full_name": "org.apache.pdfbox.pdmodel.fdf.FDFDocument.save",
+      "class_name": "FDFDocument",
+      "method_name": "save",
+      "signature": "public void save(File fileName) throws IOException",
+      "resolution_quality": "full",
+      "signal_token": "FDF",
+      "signal_source": "class_name",
+      "param_findings": [
+        {
+          "param_index": 0,
+          "param_name": "fileName",
+          "param_type": "File",
+          "actual_resource": "input/cweb.pdf",
+          "actual_extension": ".pdf",
+          "expected_extension": ".fdf",
+          "proposed_replacement": "org/apache/pdfbox/pdfparser/nocatalog.fdf",
+          "replacement_available": true
+        }
+      ]
+    },
+    {
+      "chain_key": "org.apache.pdfbox.pdmodel.fdf.FDFDocument.saveXFDF|public void saveXFDF(File fileName) throws IOException",
+      "full_name": "org.apache.pdfbox.pdmodel.fdf.FDFDocument.saveXFDF",
+      "class_name": "FDFDocument",
+      "method_name": "saveXFDF",
+      "signature": "public void saveXFDF(File fileName) throws IOException",
+      "resolution_quality": "full",
+      "signal_token": "XFDF",
+      "signal_source": "method_name",
+      "param_findings": [
+        {
+          "param_index": 0,
+          "param_name": "fileName",
+          "param_type": "File",
+          "actual_resource": "input/cweb.pdf",
+          "actual_extension": ".pdf",
+          "expected_extension": ".xml",
+          "proposed_replacement": "log4j2.xml",
+          "replacement_available": true
+        }
+      ]
+    },
+    {
+      "chain_key": "org.apache.pdfbox.pdmodel.graphics.image.CCITTFactory.createFromFile|public static PDImageXObject createFromFile(PDDocument document, File file, int number)\n            throws IOException",
+      "full_name": "org.apache.pdfbox.pdmodel.graphics.image.CCITTFactory.createFromFile",
+      "class_name": "CCITTFactory",
+      "method_name": "createFromFile",
+      "signature": "public static PDImageXObject createFromFile(PDDocument document, File file, int number)\n            throws IOException",
+      "resolution_quality": "full",
+      "signal_token": "CCITT",
+      "signal_source": "class_name",
+      "param_findings": [
+        {
+          "param_index": 1,
+          "param_name": "file",
+          "param_type": "File",
+          "actual_resource": "input/cweb.pdf",
+          "actual_extension": ".pdf",
+          "expected_extension": ".tif",
+          "proposed_replacement": "org/apache/pdfbox/pdmodel/graphics/image/ccittg4multi.tif",
+          "replacement_available": true
+        }
+      ]
+    }
+  ]
+}
